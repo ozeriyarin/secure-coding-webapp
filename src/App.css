@@ -1,0 +1,75 @@
+/* Global Styles */
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background: #f0f2f5;
+  color: #333;
+}
+
+
+
+.page-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+/* Logo Styles */
+.logo {
+  height: 80px;
+  margin: 0 auto 1rem;
+  padding: 1rem;
+  transition: transform 0.3s ease, filter 300ms;
+}
+.logo:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 1.5em rgba(100, 108, 255, 0.5));
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 1.5em rgba(97, 218, 251, 0.5));
+}
+
+/* Logo Spin Animation */
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .logo.spin {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+/* Card Component */
+.card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 2em;
+  margin: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Documentation Text */
+.read-the-docs {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Link Styles */
+a {
+  color: #1976d2;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+a:hover {
+  color: #115293;
+}
