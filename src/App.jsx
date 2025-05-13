@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, Tabs, Tab } from '@mui/material';
+import { Paper, Tabs, Tab, Box } from '@mui/material';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Components
@@ -36,102 +36,106 @@ function App() {
 
   return (
     <Router>
-      <Navbar />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <Paper 
-              elevation={0} 
-              sx={paperStyles}
-            >
-              <Tabs 
-                value={tab} 
-                onChange={handleChange} 
-                variant="fullWidth"
-                sx={{
-                  borderBottom: '1px solid #e0e0e0',
-                  backgroundColor: '#f8f9fa',
-                  '& .MuiTab-root': {
-                    py: 3,
-                    fontSize: '1.1rem',
-                    fontWeight: 500,
-                    color: '#666',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      color: '#1976d2',
-                    },
-                    '&.Mui-selected': {
-                      color: '#1976d2',
-                    },
-                  },
-                  '& .MuiTabs-indicator': {
-                    height: 3,
-                    backgroundColor: '#1976d2',
-                  },
-                }}
-              >
-                <Tab label="Login" />
-                <Tab label="Register" />
-              </Tabs>
-              <div style={{ padding: '32px' }}>
-                {tab === 0 && <LoginForm />}
-                {tab === 1 && <RegisterForm setTab={setTab} />}
-              </div>
-            </Paper>
-          }
-        />
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Navbar />
+        <Box sx={{ pt: '64px', flex: 1, pb: { xs: '40px', sm: '48px' } }}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Paper 
+                  elevation={0} 
+                  sx={paperStyles}
+                >
+                  <Tabs 
+                    value={tab} 
+                    onChange={handleChange} 
+                    variant="fullWidth"
+                    sx={{
+                      borderBottom: '1px solid #e0e0e0',
+                      backgroundColor: '#f8f9fa',
+                      '& .MuiTab-root': {
+                        py: 3,
+                        fontSize: '1.1rem',
+                        fontWeight: 500,
+                        color: '#666',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          color: '#1976d2',
+                        },
+                        '&.Mui-selected': {
+                          color: '#1976d2',
+                        },
+                      },
+                      '& .MuiTabs-indicator': {
+                        height: 3,
+                        backgroundColor: '#1976d2',
+                      },
+                    }}
+                  >
+                    <Tab label="Login" />
+                    <Tab label="Register" />
+                  </Tabs>
+                  <div style={{ padding: '32px' }}>
+                    {tab === 0 && <LoginForm />}
+                    {tab === 1 && <RegisterForm setTab={setTab} />}
+                  </div>
+                </Paper>
+              }
+            />
 
-        <Route path="/home-screen" element={<HomeScreen />} />
+            <Route path="/home-screen" element={<HomeScreen />} />
 
-        {/* Auth Routes */}
-        {[
-          { path: '/forgot-password', Component: ForgotPasswordForm },
-          { path: '/reset-password', Component: ResetPasswordForm },
-          { path: '/change-password', Component: ChangePasswordForm }
-        ].map(({ path, Component }) => (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <Paper 
-                elevation={0}
-                sx={{ 
-                  ...paperStyles,
-                  p: 4,
-                }}
-              >
-                <Component />
-              </Paper>
-            }
-          />
-        ))}
+            {/* Auth Routes */}
+            {[
+              { path: '/forgot-password', Component: ForgotPasswordForm },
+              { path: '/reset-password', Component: ResetPasswordForm },
+              { path: '/change-password', Component: ChangePasswordForm }
+            ].map(({ path, Component }) => (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  <Paper 
+                    elevation={0}
+                    sx={{ 
+                      ...paperStyles,
+                      p: 4,
+                    }}
+                  >
+                    <Component />
+                  </Paper>
+                }
+              />
+            ))}
 
-        {/* 404 */}
-        <Route
-          path="*"
-          element={
-            <Paper 
-              elevation={0}
-              sx={{ 
-                ...paperStyles,
-                p: 4,
-                textAlign: 'center',
-              }}
-            >
-              <h2 style={{
-                color: '#1976d2',
-                fontSize: '2.5rem',
-                margin: 0,
-                fontWeight: 500
-              }}>
-                404 Not Found
-              </h2>
-            </Paper>
-          }
-        />
-      </Routes>
-      <Footer />
+            {/* 404 */}
+            <Route
+              path="*"
+              element={
+                <Paper 
+                  elevation={0}
+                  sx={{ 
+                    ...paperStyles,
+                    p: 4,
+                    textAlign: 'center',
+                  }}
+                >
+                  <h2 style={{
+                    color: '#1976d2',
+                    fontSize: '2.5rem',
+                    margin: 0,
+                    fontWeight: 500
+                  }}>
+                    404 Not Found
+                  </h2>
+                </Paper>
+              }
+            />
+          </Routes>
+        </Box>
+        <Footer />
+      </Box>
     </Router>
   );
 }
