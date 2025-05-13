@@ -1,292 +1,251 @@
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Box, IconButton, InputAdornment, Alert, Link } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import {
+  TextField,
+  Button,
+  Typography,
+  Box,
+  IconButton,
+  InputAdornment,
+  Alert,
+  Stack
+} from '@mui/material';
+import { Visibility, VisibilityOff, CheckCircle, Cancel } from '@mui/icons-material';
 
+/**
+ * RegisterForm component
+ * Displays a registration form with inline validation and live password-strength feedback
+ */
 function RegisterForm({ setTab }) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [message, setMessage] = useState('');
+  /* ---------- state ---------- */
+  const [values, setValues] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
 
-  const handleClickShowPassword = () => setShowPassword((show) => !show);
-  const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
+  const [errors, setErrors] = useState({});
+  const [statusMsg, setStatusMsg] = useState('');
+  const [showPwd, setShowPwd] = useState({ pwd: false, confirm: false });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (password !== confirmPassword) {
-        setMessage('Passwords do not match.');
-        return;
-      } else {
-        setMessage(''); // Clear previous messages if validation passes
-    }
-
-    // check if email is valid
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-        setMessage('Invalid email address.');
-        return;
-    } else {
-        setMessage(''); // Clear previous messages if validation passes
-    }
-
-    // check if name is valid
-    const namePattern = /^[a-zA-Z]+$/;
-    if (!namePattern.test(firstName) || !namePattern.test(lastName)) {
-        setMessage('Name can only contain letters.'); 
-        return;
-    } else {
-        setMessage(''); // Clear previous messages if validation passes
-    }
-
-    // create the username
-    const username = email.split('@')[0];
-
-    const data = {
-      first_name: firstName,
-      last_name: lastName,
-      username: username,
-      email: email,
-      password: password,
-    };
-
-    try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Success:', result);
-        setMessage('Registration successful!');
-        // Clear form or navigate user after success
-      setFirstName('');
-      setLastName('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      // move to login tab
-      setTab(0);
-
-      } else {
-        const errorResult = await response.json();
-        setMessage(errorResult.detail || 'Registration failed.');
-        console.error('Error:', errorResult);
-      }
-    } catch (error) {
-      setMessage('An unexpected error occurred.');
-      console.error('Network error:', error);
-    }
-
-    console.log('Form submitted:', data);
+  /* ---------- regex patterns ---------- */
+  const patterns = {
+    name: /^[a-zA-Z\u0590-\u05FF]+$/,
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   };
 
-  return (
-    <Box
-      component="form"
-      onSubmit={handleSubmit}
-      sx={{
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-      }}
+  /* ---------- password helpers ---------- */
+  const passwordChecks = (pwd) => ({
+    length: pwd.length >= 8,
+    mixCase: /(?=.*[a-z])(?=.*[A-Z])/.test(pwd),
+    special: /[^A-Za-z0-9]/.test(pwd)
+  });
+
+  /* ---------- field-level validation ---------- */
+  const validate = (field, val) => {
+    switch (field) {
+      case 'firstName':
+      case 'lastName':
+        return patterns.name.test(val) ? '' : 'letters only';
+      case 'email':
+        return patterns.email.test(val) ? '' : 'invalid email';
+      case 'password': {
+        const pc = passwordChecks(val);
+        return pc.length && pc.mixCase && pc.special ? '' : 'weak password';
+      }
+      case 'confirmPassword':
+        return val === values.password ? '' : 'passwords mismatch';
+      default:
+        return '';
+    }
+  };
+
+  /* ---------- input change handler ---------- */
+  const handleChange = (field) => (e) => {
+    const val = e.target.value;
+    setValues({ ...values, [field]: val });
+    setErrors({ ...errors, [field]: validate(field, val) });
+    if (field === 'password') {
+      // re-validate confirmPassword when password changes
+      setErrors((prev) => ({
+        ...prev,
+        confirmPassword: validate('confirmPassword', values.confirmPassword)
+      }));
+    }
+  };
+
+  /* ---------- password visibility toggle ---------- */
+  const togglePwd = (key) =>
+    setShowPwd((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  /* ---------- overall form validity ---------- */
+  const isFormValid = () =>
+    Object.values(values).every(Boolean) && Object.values(errors).every((e) => !e);
+
+  /* ---------- submit handler ---------- */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!isFormValid()) {
+      setStatusMsg('fill all fields correctly');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: values.firstName,
+          last_name: values.lastName,
+          username: values.email.split('@')[0],
+          email: values.email,
+          password: values.password
+        })
+      });
+
+      if (res.ok) {
+        setStatusMsg('registration successful');
+        setValues({
+          firstName: '',
+          lastName: '',
+          email: '',
+          password: '',
+          confirmPassword: ''
+        });
+        setTab?.(0); // move to login tab
+      } else {
+        const err = await res.json();
+        setStatusMsg(err.detail || 'registration failed');
+      }
+    } catch {
+      setStatusMsg('network error');
+    }
+  };
+
+  /* ---------- reusable UI for password criteria ---------- */
+  const Criterion = ({ ok, label }) => (
+    <Typography
+      variant="body2"
+      sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+      color={ok ? 'success.main' : 'text.secondary'}
     >
-      <Typography 
-        variant="h4" 
-        sx={{ 
-          textAlign: 'center',
-          color: '#1976D2',
-          fontSize: { xs: '1.75rem', sm: '2rem' },
-          fontWeight: 600,
-          mb: 0.5,
-          letterSpacing: '-0.5px'
-        }}
-      >
-        Create Account
-      </Typography>
+      {ok ? <CheckCircle fontSize="small" /> : <Cancel fontSize="small" />}
+      {label}
+    </Typography>
+  );
 
-      
+  /* ---------- live password checks ---------- */
+  const pc = passwordChecks(values.password);
 
-      {message && (
-        <Alert 
-          severity={message.includes('successful') ? 'success' : 'error'}
-          sx={{ 
-            width: '100%',
-            borderRadius: 1,
-            '& .MuiAlert-message': {
-              width: '100%'
-            }
-          }}
+  /* ---------- render ---------- */
+  return (
+    <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+      <Stack spacing={2}>
+        <Typography
+          variant="h4"
+          textAlign="center"
+          fontWeight={600}
+          color="primary.main"
         >
-          {message}
-        </Alert>
-      )}
+          Create Account
+        </Typography>
 
-      <Box sx={{ 
-        display: 'flex', 
-        gap: 2,
-        width: '100%'
-      }}>
+        {statusMsg && (
+          <Alert severity={statusMsg.includes('successful') ? 'success' : 'error'}>
+            {statusMsg}
+          </Alert>
+        )}
+
+        {/* first / last name */}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <TextField
+            label="First Name"
+            value={values.firstName}
+            onChange={handleChange('firstName')}
+            error={!!errors.firstName}
+            helperText={errors.firstName}
+            fullWidth
+          />
+          <TextField
+            label="Last Name"
+            value={values.lastName}
+            onChange={handleChange('lastName')}
+            error={!!errors.lastName}
+            helperText={errors.lastName}
+            fullWidth
+          />
+        </Stack>
+
+        {/* email */}
         <TextField
-          label="First Name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          required
+          label="Email"
+          type="email"
+          value={values.email}
+          onChange={handleChange('email')}
+          error={!!errors.email}
+          helperText={errors.email}
           fullWidth
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 1,
-              backgroundColor: 'rgba(255, 255, 255, 0.09)',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.13)'
-              },
-              '&.Mui-focused': {
-                backgroundColor: 'rgba(255, 255, 255, 0.09)'
-              }
-            }
+        />
+
+        {/* password */}
+        <TextField
+          label="Password"
+          type={showPwd.pwd ? 'text' : 'password'}
+          value={values.password}
+          onChange={handleChange('password')}
+          error={!!errors.password}
+          helperText={errors.password}
+          fullWidth
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={() => togglePwd('pwd')} edge="end">
+                  {showPwd.pwd ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            )
           }}
         />
+
+        {/* confirm password */}
         <TextField
-          label="Last Name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          required
+          label="Confirm Password"
+          type={showPwd.confirm ? 'text' : 'password'}
+          value={values.confirmPassword}
+          onChange={handleChange('confirmPassword')}
+          error={!!errors.confirmPassword}
+          helperText={errors.confirmPassword}
           fullWidth
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 1,
-              backgroundColor: 'rgba(255, 255, 255, 0.09)',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.13)'
-              },
-              '&.Mui-focused': {
-                backgroundColor: 'rgba(255, 255, 255, 0.09)'
-              }
-            }
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={() => togglePwd('confirm')} edge="end">
+                  {showPwd.confirm ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            )
           }}
         />
-      </Box>
 
-      <TextField
-        label="Email"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        fullWidth
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 1,
-            backgroundColor: 'rgba(255, 255, 255, 0.09)',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.13)'
-            },
-            '&.Mui-focused': {
-              backgroundColor: 'rgba(255, 255, 255, 0.09)'
-            }
-          }
-        }}
-      />
+        {/* live password criteria (placed under confirm-password as requested) */}
+        <Box sx={{ pl: 1 }}>
+          <Criterion ok={pc.length} label="At least 8 characters" />
+          <Criterion ok={pc.mixCase} label="Upper & lower-case letters" />
+          <Criterion ok={pc.special} label="At least one special character" />
+        </Box>
 
-      <TextField
-        label="Password"
-        type={showPassword ? 'text' : 'password'}
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        fullWidth
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 1,
-            backgroundColor: 'rgba(255, 255, 255, 0.09)',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.13)'
-            },
-            '&.Mui-focused': {
-              backgroundColor: 'rgba(255, 255, 255, 0.09)'
-            }
-          }
-        }}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={handleClickShowPassword}
-                edge="end"
-              >
-                {showPassword ? <VisibilityOff /> : <Visibility />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
-
-      <TextField
-        label="Confirm Password"
-        type={showConfirmPassword ? 'text' : 'password'}
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-        required
-        fullWidth
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 1,
-            backgroundColor: 'rgba(255, 255, 255, 0.09)',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.13)'
-            },
-            '&.Mui-focused': {
-              backgroundColor: 'rgba(255, 255, 255, 0.09)'
-            }
-          }
-        }}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={handleClickShowConfirmPassword}
-                edge="end"
-              >
-                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
-
-      <Button
-        type="submit"
-        variant="contained"
-        fullWidth
-        sx={{
-          mt: 2,
-          py: 1.5,
-          backgroundColor: '#1976D2',
-          borderRadius: 1,
-          textTransform: 'none',
-          fontSize: '1rem',
-          fontWeight: 500,
-          boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
-          '&:hover': {
-            backgroundColor: '#1565C0',
-            boxShadow: '0 6px 16px rgba(25, 118, 210, 0.3)'
-          }
-        }}
-      >
-        Create Account
-      </Button>
-
-     
+        {/* submit */}
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={!isFormValid()}
+          sx={{ py: 1.5, textTransform: 'none', fontSize: '1rem', fontWeight: 500 }}
+          fullWidth
+        >
+          Create Account
+        </Button>
+      </Stack>
     </Box>
   );
 }
