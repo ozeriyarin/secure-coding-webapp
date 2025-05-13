@@ -173,15 +173,22 @@ export default function HomeScreen() {
 
   return (
     <Box sx={{ 
-      minHeight: '100vh',
+      height: '100vh',  // Changed from minHeight to height
       backgroundColor: '#f8fafc',
-      pt: '64px' // Height of navbar
+      pt: '64px', // Height of navbar
+      display: 'flex',  // Added display flex
+      flexDirection: 'column',  // Added flex direction
+      overflow: 'hidden'  // Prevent outer scrolling
     }}>
       <Container 
         maxWidth={false}
         sx={{ 
           py: 4,
-          px: { xs: 2, sm: 3, md: 4, lg: 6, xl: 8 }
+          px: { xs: 2, sm: 3, md: 4, lg: 6, xl: 8 },
+          height: 'calc(100% - 64px)',  // Take remaining height
+          display: 'flex',  // Added display flex
+          flexDirection: 'column',  // Added flex direction
+          overflow: 'hidden'  // Prevent container scrolling
         }}
       >
         {/* Header with Title and Add Button */}
@@ -248,6 +255,7 @@ export default function HomeScreen() {
             border: '1px solid rgba(0, 0, 0, 0.05)',
             width: '100%',
             mb: 3,
+            overflow: 'hidden',  // Prevent paper scrolling
             '&:hover': {
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.1)'
             }
@@ -256,10 +264,22 @@ export default function HomeScreen() {
           <Box 
             sx={{ 
               width: '100%',
-              overflowX: 'auto',
-              overflowY: 'auto',
-              minHeight: '600px',
-              maxHeight: 'calc(100vh - 300px)'
+              height: '100%',  // Take full height
+              overflow: 'auto',  // Enable scrolling only for the table container
+              '&::-webkit-scrollbar': {
+                width: '8px',
+                height: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                background: '#555',
+              }
             }}
           >
             <CustomerTable customers={customers} />
