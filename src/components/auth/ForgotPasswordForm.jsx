@@ -1,22 +1,27 @@
-import React, {useEffect, useState } from 'react';
-import { Link , useNavigate } from 'react-router-dom';
-import { Container, TextField, Button, Typography, Box , Snackbar , Alert } from '@mui/material';
-
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { TextField, Button, Typography, Box, Alert } from '@mui/material';
 
 function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [userId, setUserId] = useState('');
   const [isSubmitHit, setIsSubmitHit] = useState(false);
-  // State to hold an error or status message
   const [message, setMessage] = useState('');
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-
-
-  const [timer, setTimer] = useState(0);            // remaining seconds
+  const [timer, setTimer] = useState(0);
   const [isResendDisabled, setIsResendDisabled] = useState(false);
-
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prevTimer) => prevTimer - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setIsResendDisabled(false);
+    }
+  }, [timer]);
   
   const sendCode = async () => {
     try {
@@ -27,177 +32,224 @@ function ForgotPasswordForm() {
         },
         body: JSON.stringify({email}),
       });
-      if (!response.ok){
+      if (!response.ok) {
         const errorData = await response.json();
         setMessage(errorData.message || 'Failed to send code.');
         return;
       }
-      else {
-        setMessage(''); // Clear previous messages if validation passes
-        const responseData = await response.json();
-        console.log('Password reset successful:', responseData);
-        setMessage('Password reset link sent to your email successfully.');
-        setUserId(responseData.user_id);
-        setOpenSnackbar(true);
-        setIsSubmitHit(true);
-        setTimer(300);             // 5 minutes = 300s
-        setIsResendDisabled(true);
-      }
+      const responseData = await response.json();
+      setMessage('Verification code sent successfully!');
+      setUserId(responseData.user_id);
+      setIsSubmitHit(true);
+      setTimer(300);
+      setIsResendDisabled(true);
     } catch (err) {
       setMessage(err.message || 'Failed to send code.');
     }
   };
-  
-  useEffect(() => {
-    if (!isSubmitHit || timer === 0) return;
-    const interval = setInterval(() => {
-      setTimer(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setIsResendDisabled(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isSubmitHit, timer]);
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if(!isSubmitHit) {
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(email)) {
-        setMessage('Invalid email format.');
-        return;
-      } else {
-        setMessage(''); // Clear previous messages if validation passes
-      }  
-
+    
+    if (!isSubmitHit) {
       await sendCode();
-    }
-    else {
-
-      const data = {
-        code: code,
-        user_id: userId,
-      };
-
-      try {
-        const response = await fetch('/api/verifications/verify', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          setMessage(errorData.message || 'Password reset failed. Please try again.');
-          return;
-        }
-        const responseData = await response.json();
-        console.log('Password reset successful:', responseData);
-        setCode('');
-        setOpenSnackbar(true);
-        console.log('User ID:', userId);
-        navigate('/reset-password', { state: { userId: userId } });
-      } catch (error) {
-        console.error('Error during password reset:', error);
-        setMessage('An error occurred. Please try again later.');
-      }
-    }
-
-  };
-
-  const handleClose = (event , reason) => {
-    if (reason === 'clickaway') {
       return;
     }
-    setOpenSnackbar(false);
+
+    try {
+      const response = await fetch('/api/verifications/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          code: code
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        setMessage(errorData.message || 'Invalid verification code.');
+        return;
+      }
+      navigate('/reset-password', { state: { userId: userId } });
+    } catch (error) {
+      setMessage('An error occurred. Please try again later.');
+    }
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{
-          mt: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+      }}
+    >
+      <Typography 
+        variant="h4" 
+        sx={{ 
+          textAlign: 'center',
+          color: '#1976D2',
+          fontSize: { xs: '1.75rem', sm: '2rem' },
+          fontWeight: 600,
+          mb: 1,
+          letterSpacing: '-0.5px'
         }}
       >
-        <Typography variant="h4" align="center">
-          Forgot Password
-        </Typography>
-        <Typography variant="body1" align="center">
-          {isSubmitHit ? 'Enter the verification code sent to your email' : 'Enter your email address to receive a password reset link.'}
-        </Typography>
+        Forgot Password
+      </Typography>
 
-        {message && (
-          <Alert severity={message.includes('successful') ? 'success' : 'error'}>
-            {message}
-          </Alert>
-        )}
-        
-        {isSubmitHit? (
-          <TextField
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          textAlign: 'center',
+          color: 'text.secondary',
+          mb: 0.5
+        }}
+      >
+        {isSubmitHit 
+          ? 'Enter the verification code sent to your email' 
+          : 'Enter your email address to receive a verification code'
+        }
+      </Typography>
+
+      {message && (
+        <Alert 
+          severity={message.includes('successful') ? 'success' : 'error'}
+          sx={{ 
+            width: '100%',
+            borderRadius: 1,
+            '& .MuiAlert-message': {
+              width: '100%'
+            }
+          }}
+        >
+          {message}
+        </Alert>
+      )}
+
+      {isSubmitHit ? (
+        <TextField
           label="Verification Code"
-          variant="outlined"
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value)}
           required
+          fullWidth
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 1,
+              backgroundColor: 'rgba(255, 255, 255, 0.09)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.13)'
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255, 255, 255, 0.09)'
+              }
+            }
+          }}
         />
       ) : (
-      
         <TextField
           label="Email"
-          variant="outlined"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          fullWidth
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 1,
+              backgroundColor: 'rgba(255, 255, 255, 0.09)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.13)'
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255, 255, 255, 0.09)'
+              }
+            }
+          }}
         />
       )}
 
-        <Button type="submit" variant="contained" color="primary">
-          {isSubmitHit ? 'Verify Code' : 'Send Code'}
-        </Button>
-
-        {isSubmitHit && (
-          <Box sx={{ textAlign: 'center', mt: 1 }}>
-            <Typography variant="body2">
-              Resend in {Math.floor(timer/60)}:{String(timer%60).padStart(2,'0')}
-            </Typography>
-            <Button onClick={sendCode} disabled={isResendDisabled} sx={{ mt: 1 }}>
-              Send Again
-            </Button>
-          </Box>
-        )}
-
-        <Button type='button' color='info'>
-          <Link to='/'>              
-              Back to Login
-          </Link>
-        </Button>
-      </Box>
-
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        message="Password reset link sent to your email."
+      <Button
+        type="submit"
+        variant="contained"
+        fullWidth
+        sx={{
+          mt: 2,
+          py: 1.5,
+          backgroundColor: '#1976D2',
+          borderRadius: 1,
+          textTransform: 'none',
+          fontSize: '1rem',
+          fontWeight: 500,
+          boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+          '&:hover': {
+            backgroundColor: '#1565C0',
+            boxShadow: '0 6px 16px rgba(25, 118, 210, 0.3)'
+          }
+        }}
       >
-        <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}>
-          Password reset link sent to your email.
-        </Alert>
-      </Snackbar>
-    </Container>
+        {isSubmitHit ? 'Verify Code' : 'Send Code'}
+      </Button>
+
+      {isSubmitHit && (
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: 'text.secondary',
+              textAlign: 'center' 
+            }}
+          >
+            Resend in {Math.floor(timer/60)}:{String(timer%60).padStart(2,'0')}
+          </Typography>
+          <Button
+            onClick={sendCode}
+            disabled={isResendDisabled}
+            sx={{
+              color: '#1976D2',
+              textTransform: 'none',
+              fontSize: '0.875rem',
+              '&:hover': {
+                backgroundColor: 'transparent',
+                textDecoration: 'underline'
+              },
+              '&.Mui-disabled': {
+                color: 'text.disabled'
+              }
+            }}
+          >
+            Send Again
+          </Button>
+        </Box>
+      )}
+
+      <Button
+        onClick={() => navigate('/')}
+        sx={{
+          color: '#1976D2',
+          textTransform: 'none',
+          fontSize: '0.875rem',
+          '&:hover': {
+            backgroundColor: 'transparent',
+            textDecoration: 'underline'
+          }
+        }}
+      >
+        Back to Login
+      </Button>
+    </Box>
   );
 }
 

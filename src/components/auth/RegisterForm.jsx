@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Container, TextField, Button, Typography, Box , IconButton, InputAdornment , Alert} from '@mui/material';
+import { TextField, Button, Typography, Box, IconButton, InputAdornment, Alert, Link } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-
 
 function RegisterForm({ setTab }) {
   const [firstName, setFirstName] = useState('');
@@ -11,7 +10,6 @@ function RegisterForm({ setTab }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // State to hold an error or status message
   const [message, setMessage] = useState('');
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -90,102 +88,237 @@ function RegisterForm({ setTab }) {
     console.log('Form submitted:', data);
   };
 
-
-
   return (
-    <Container maxWidth="sm">
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{
-          mt: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1,
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+      }}
+    >
+      <Typography 
+        variant="h4" 
+        sx={{ 
+          textAlign: 'center',
+          color: '#1976D2',
+          fontSize: { xs: '1.75rem', sm: '2rem' },
+          fontWeight: 600,
+          mb: 0.5,
+          letterSpacing: '-0.5px'
         }}
       >
-        <Typography variant="h4" align="center">Register</Typography>
+        Create Account
+      </Typography>
 
-        {message && (
-          <Alert severity={message.includes('successful') ? 'success' : 'error'}>
-            {message}
-          </Alert>
-        )}
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          textAlign: 'center',
+          color: 'text.secondary',
+          mb: 0.5
+        }}
+      >
+        Fill in your details to get started
+      </Typography>
 
-        
+      {message && (
+        <Alert 
+          severity={message.includes('successful') ? 'success' : 'error'}
+          sx={{ 
+            width: '100%',
+            borderRadius: 1,
+            '& .MuiAlert-message': {
+              width: '100%'
+            }
+          }}
+        >
+          {message}
+        </Alert>
+      )}
+
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2,
+        width: '100%'
+      }}>
         <TextField
           label="First Name"
-          variant="outlined"
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           required
+          fullWidth
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 1,
+              backgroundColor: 'rgba(255, 255, 255, 0.09)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.13)'
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255, 255, 255, 0.09)'
+              }
+            }
+          }}
         />
         <TextField
           label="Last Name"
-          variant="outlined"
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           required
-        />
-        <TextField
-          label="Email"
-          variant="outlined"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <TextField
-          label="Password"
-          variant="outlined"
-          type={showPassword ? 'text' : 'password'}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          slotProps={{
-            input: {
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="toggle password visibility"
-                    onClick={handleClickShowPassword}
-                    edge="end"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            },
+          fullWidth
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 1,
+              backgroundColor: 'rgba(255, 255, 255, 0.09)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.13)'
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255, 255, 255, 0.09)'
+              }
+            }
           }}
         />
-        <TextField
-          label="Confirm Password"
-          variant="outlined"
-          type={showConfirmPassword ? 'text' : 'password'}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          slotProps={{
-            input: {
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="toggle password visibility"
-                    onClick={handleClickShowConfirmPassword}
-                    edge="end"
-                  >
-                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-        <Button type="submit" variant="contained" color="primary">
-          Register
-        </Button>
       </Box>
-    </Container>
+
+      <TextField
+        label="Email"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        fullWidth
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 1,
+            backgroundColor: 'rgba(255, 255, 255, 0.09)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.13)'
+            },
+            '&.Mui-focused': {
+              backgroundColor: 'rgba(255, 255, 255, 0.09)'
+            }
+          }
+        }}
+      />
+
+      <TextField
+        label="Password"
+        type={showPassword ? 'text' : 'password'}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        fullWidth
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 1,
+            backgroundColor: 'rgba(255, 255, 255, 0.09)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.13)'
+            },
+            '&.Mui-focused': {
+              backgroundColor: 'rgba(255, 255, 255, 0.09)'
+            }
+          }
+        }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={handleClickShowPassword}
+                edge="end"
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      <TextField
+        label="Confirm Password"
+        type={showConfirmPassword ? 'text' : 'password'}
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        required
+        fullWidth
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 1,
+            backgroundColor: 'rgba(255, 255, 255, 0.09)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.13)'
+            },
+            '&.Mui-focused': {
+              backgroundColor: 'rgba(255, 255, 255, 0.09)'
+            }
+          }
+        }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={handleClickShowConfirmPassword}
+                edge="end"
+              >
+                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      <Button
+        type="submit"
+        variant="contained"
+        fullWidth
+        sx={{
+          mt: 2,
+          py: 1.5,
+          backgroundColor: '#1976D2',
+          borderRadius: 1,
+          textTransform: 'none',
+          fontSize: '1rem',
+          fontWeight: 500,
+          boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+          '&:hover': {
+            backgroundColor: '#1565C0',
+            boxShadow: '0 6px 16px rgba(25, 118, 210, 0.3)'
+          }
+        }}
+      >
+        Create Account
+      </Button>
+
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center',
+        gap: 2,
+        mt: 1 
+      }}>
+        <Typography variant="body2" color="text.secondary">
+          Already have an account?{' '}
+          <Link 
+            component="button"
+            onClick={() => setTab(0)}
+            sx={{ 
+              color: '#1976D2',
+              textDecoration: 'none',
+              '&:hover': {
+                textDecoration: 'underline'
+              }
+            }}
+          >
+            Sign In
+          </Link>
+        </Typography>
+      </Box>
+    </Box>
   );
 }
 

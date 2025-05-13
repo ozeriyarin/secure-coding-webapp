@@ -1,17 +1,21 @@
-import {useEffect, useState} from "react";
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 
 // MUI imports
 import {
-  Modal,
-  Box,
-  Typography,
-  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Button,
   TextField,
+  Box,
+  Typography
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import EditIcon from '@mui/icons-material/Edit';
 
 // date pickers
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -19,8 +23,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
-
-
 
 /**
  * Main component of the Add/Edit customers view.
@@ -38,189 +40,93 @@ export default function CustomerFormModal({
   onSubmit,
   initialData, // If null => Add mode, else => Edit mode
 }) {
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    age: '',
+    phone: '',
+    email: '',
+    date: ''
+  });
 
-    // Determine if the user in 'add' or 'edit' mode
-    const isEditMode = Boolean(initialData && initialData.id);
+  const [invalidFields, setInvalidFields] = useState({ // State for error bold fields
+    first_name: false,
+    last_name: false,
+    phone: false,
+    email: false,
+    date: false,
+  });
 
-    // States
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [email, setEmail] = useState('');
-    const [birthday, setBirthday] = useState(null); // Date object
-
-    const [invalidFields, setInvalidFields] = useState({ // State for error bold fields
-        firstName: false,
-        lastName: false,
-        phoneNumber: false,
-        email: false,
-        birthday: false,
-    });
-
-    const addCustomer = async (customerDetails) => {
-        try {
-          console.log('Adding customer:', customerDetails);
-            const response = await fetch('/api/customers/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(customerDetails),
-            });
-            if (!response.ok) {
-                throw new Error('Failed to add customer');
-            }
-            const data = await response.json();
-            console.log('Customer added successfully:', data);
-        } catch (error) {
-            console.error('Error adding customer:', error);
-        }
+  const addCustomer = async (customerDetails) => {
+    try {
+      console.log('Adding customer:', customerDetails);
+      const response = await fetch('/api/customers/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(customerDetails),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to add customer');
+      }
+      const data = await response.json();
+      console.log('Customer added successfully:', data);
+    } catch (error) {
+      console.error('Error adding customer:', error);
     }
-
-  // Set States
-  useEffect(() => {
-    // if the user in 'edit' mode
-    if (isEditMode && initialData) {
-      // Parse the date 'DD/MM/YYYY'
-        const [day, month, year] = initialData.formattedDate.split('/');
-        const date = new Date(year, month - 1, day);
-        setBirthday(date);
-      // Set the other states
-        setFirstName(initialData.firstName || '');
-        setLastName(initialData.lastName || '');
-        setPhoneNumber(initialData.phoneNumber || '');
-        setEmail(initialData.email || '');
-    } else {
-      // Otherwise, reset states for 'Add' mode
-        setFirstName('');
-        setLastName('');
-        setPhoneNumber('');
-        setEmail('');
-        setBirthday('');
-    }
-  }, [isEditMode, initialData]);
-
-  /* ====================================================================  */
-  /*                              Handlers                                 */
-  /* ====================================================================  */
-  /**
- 
-   * Handler which is called when Date changes
-   * @param newValue - The new value selected (typically a date object).
-   */
-    const handleBirthDayChange = (newValue) => {
-        if (newValue) {
-        let selectedDate = newValue;
-        selectedDate = new Date(selectedDate);
-        setBirthday(selectedDate);
-        } else {
-        setBirthday('');
-        }
-    };
-
-    /** 
-     * Handler which is called when the firstName changes.
-     * @param {React.ChangeEvent<HTMLInputElement>} event - The event object.
-    **/
-    function handleFirstNameChange(event) {
-        const input = event.target.value;
-        if (input.trim().length <= 50)
-        setInvalidFields((prev) => ({ ...prev, firstName: false }));
-        setFirstName(input);
-    }
-
-    /**
-     * Handler which is called when the lastName changes.
-     * @param {React.ChangeEvent<HTMLInputElement>} event - The event object.
-    **/
-    function handleLastNameChange(event) {
-        const input = event.target.value;
-        if (input.trim().length <= 50)
-            setInvalidFields((prev) => ({ ...prev, lastName: false }));
-        setLastName(input);
-    }
-
-
-    /**
-     * Handler which is called when the phoneNumber changes.
-     * @param {React.ChangeEvent<HTMLInputElement>} event - The event object.
-    **/
-    function handlePhoneNumberChange(event) {
-        const input = event.target.value;
-        if (input.trim().length <= 50)
-            setInvalidFields((prev) => ({ ...prev, phoneNumber: false }));
-        setPhoneNumber(input);
-    }
-
-    /**
-     * Handler which is called when the email changes.
-     * @param {React.ChangeEvent<HTMLInputElement>} event - The event object.
-    **/
-    function handleEmailChange(event) {
-        const input = event.target.value;
-        if (input.trim().length <= 50)
-            setInvalidFields((prev) => ({ ...prev, email: false }));
-        setEmail(input);
-    }
-
-
-  /**
-   * Handler which is called when:
-   * 1. the user clicks submit
-   * 2. user clicks clear button
-   * Checkups: a value was selected
-   */
-  function clearFormHandler() {
-    setFirstName('');
-    setLastName('');
-    setPhoneNumber('');
-    setEmail('');
-    setBirthday('');
-    setInvalidFields({ firstName: false, lastName: false, phoneNumber: false, email: false, birthday: false });
   }
 
-  /**
-   * Handler which is called when a user clicks the submit button.
-   * Checks the input fields and activates the `onAddCustomer` callback with the new customer data.
-   * @param {React.FormEvent} event - The form submission event.
-   */
-  async function submitHandler (event) {
-    event.preventDefault(); // we want to handle the submit event manually.
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    } else {
+      setFormData({
+        first_name: '',
+        last_name: '',
+        age: '',
+        phone: '',
+        email: '',
+        date: ''
+      });
+    }
+  }, [initialData]);
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setInvalidFields({
-      firstName: false,
-      lastName: false,
-      phoneNumber: false,
+      first_name: false,
+      last_name: false,
+      phone: false,
       email: false,
-      birthday: false,
+      date: false,
     });
 
     const empties = {
-      firstName: !firstName.trim(),
-      lastName:  !lastName.trim(),
-      phoneNumber:!phoneNumber.trim(),
-      email:     !email.trim(),
-      birthday:  !birthday,
+      first_name: !formData.first_name.trim(),
+      last_name: !formData.last_name.trim(),
+      phone: !formData.phone.trim(),
+      email: !formData.email.trim(),
+      date: !formData.date,
     };
 
-    const namePattern  = /^[A-Za-z\u0590-\u05FF\s'-]{2,50}$/;    // letters/spaces/’–, length 2–50
+    const namePattern = /^[A-Za-z\u0590-\u05FF\s'-]{2,50}$/;    // letters/spaces/’–, length 2–50
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;          // basic email
     const phonePattern = /^\+?[0-9]{7,15}$/;            // 7-15 digits,'+' at the start   
 
-
     const formats = {
-      firstName:   !empties.firstName && !namePattern.test(firstName),
-      lastName:    !empties.lastName  && !namePattern.test(lastName),
-      email:       !empties.email     && !emailPattern.test(email),
-      phoneNumber: !empties.phoneNumber && !phonePattern.test(phoneNumber),
+      first_name: !empties.first_name && !namePattern.test(formData.first_name),
+      last_name: !empties.last_name && !namePattern.test(formData.last_name),
+      email: !empties.email && !emailPattern.test(formData.email),
+      phone: !empties.phone && !phonePattern.test(formData.phone),
     };
 
     const newInvalid = {
-      firstName:   empties.firstName   || formats.firstName,
-      lastName:    empties.lastName    || formats.lastName,
-      phoneNumber: empties.phoneNumber || formats.phoneNumber,
-      email:       empties.email       || formats.email,
-      birthday:    empties.birthday,
+      first_name: empties.first_name || formats.first_name,
+      last_name: empties.last_name || formats.last_name,
+      phone: empties.phone || formats.phone,
+      email: empties.email || formats.email,
+      date: empties.date,
     };
     setInvalidFields(newInvalid);
 
@@ -228,160 +134,182 @@ export default function CustomerFormModal({
       return;
     }
 
-    /* ========================= Create a customer object ==============================  */
+    const id = initialData ? initialData.id : uuidv4(); // Generate a new ID for the customer
 
-    const id = isEditMode ? initialData.id : uuidv4(); // Generate a new ID for the customer
-
-    // Format the date
-    const formattedDate = dayjs(birthday).format('YYYY-MM-DD');
+    const formattedDate = dayjs(formData.date).format('YYYY-MM-DD');
 
     const customerDetails = {
-        // If editing, keep the same id; if adding, no id needed.
-        id: id,
-        first_name:firstName,
-        last_name: lastName,
-        phone : phoneNumber,
-        email: email,
-        birthday: formattedDate,
+      id: id,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      phone: formData.phone,
+      email: formData.email,
+      birthday: formattedDate,
     };
 
-    // Call parent
-    onSubmit(customerDetails, isEditMode);
-    // Add customer to the database
-    if (!isEditMode) {
+    onSubmit(customerDetails, Boolean(initialData));
+    if (!initialData) {
       await addCustomer(customerDetails);
     }
-    // Clear form or close modal
-    clearFormHandler();
-  }
-
-  /* ====================================================================  */
-  /*                     Main {JSX.Element} To Display                     */
-  /* ====================================================================  */
-  // Title & Button label
-  const title = isEditMode
-    ? `Edit Customer: ${initialData.firstName} ${initialData.lastName}`
-    : 'Add Customer';
-
-  const buttonLabel = isEditMode ? 'Update' : 'Add';
+  };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          backgroundColor: 'background.paper',
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
           borderRadius: 2,
-          width: 750,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          m: 2,
+          maxHeight: 'calc(100% - 64px)',
+          maxWidth: { sm: 600 }
+        }
+      }}
+    >
+      <DialogTitle 
+        sx={{ 
+          pb: 2,
+          pt: 3,
+          px: 3,
+          borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
         }}
       >
-        {/* Header */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: 1,
-            backgroundColor: 'primary.main',
+        <Typography 
+          variant="h5" 
+          sx={{ 
+            fontWeight: 600,
+            color: '#1976D2',
+            fontSize: '1.5rem'
           }}
         >
-          <Typography variant='h6' color='white'>
-            {title}
-          </Typography>
-          <IconButton
-            edge='end'
-            onClick={() => {
-              onClose();
-              clearFormHandler();
-            }}
-            sx={{ color: 'white' }}
-          >
-            <CloseIcon />
-          </IconButton>
+          {initialData ? 'Edit Customer' : 'Add New Customer'}
+        </Typography>
+      </DialogTitle>
+
+      <DialogContent 
+        sx={{ 
+          p: 0,
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': {
+            width: '8px'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            borderRadius: '4px'
+          }
+        }}
+      >
+        <Box 
+          component="form" 
+          onSubmit={handleSubmit}
+          sx={{ 
+            p: 3,
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            gap: 3
+          }}
+        >
+          <TextField
+            label="First Name"
+            value={formData.first_name}
+            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+            error={invalidFields.first_name}
+            helperText={invalidFields.first_name ? 'First name is required' : ''}
+            required
+            fullWidth
+            sx={{ gridColumn: { xs: '1', sm: '1' } }}
+          />
+          <TextField
+            label="Last Name"
+            value={formData.last_name}
+            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+            error={invalidFields.last_name}
+            helperText={invalidFields.last_name ? 'Last name is required' : ''}
+            required
+            fullWidth
+            sx={{ gridColumn: { xs: '1', sm: '2' } }}
+          />
+          <TextField
+            label="Age"
+            type="number"
+            value={formData.age}
+            onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+            required
+            fullWidth
+            sx={{ gridColumn: { xs: '1', sm: '1' } }}
+          />
+          <TextField
+            label="Phone"
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            error={invalidFields.phone}
+            helperText={invalidFields.phone ? 'Phone number is required' : ''}
+            required
+            fullWidth
+            sx={{ gridColumn: { xs: '1', sm: '2' } }}
+          />
+          <TextField
+            label="Email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            error={invalidFields.email}
+            helperText={invalidFields.email ? 'Valid email is required' : ''}
+            required
+            fullWidth
+            sx={{ gridColumn: { xs: '1', sm: '1/3' } }}
+          />
+          <TextField
+            label="Date"
+            type="date"
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            error={invalidFields.date}
+            helperText={invalidFields.date ? 'Date is required' : ''}
+            required
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+            sx={{ gridColumn: { xs: '1', sm: '1/3' } }}
+          />
         </Box>
+      </DialogContent>
 
-        {/* Body */}
-        <Box sx={{ padding: '26px' }}>
-          <form onSubmit={submitHandler}>
-            {/* First Row: First Name, Last Name, Birthday*/}
-            <Box sx={{ display: 'flex', alignItems: 'top' , gap: 3 , mt: 2 }}>
-              {/* First Name */}
-                <TextField
-                    style={{ width: 200 }}
-                    label='First Name*' // Required
-                    value={firstName}
-                    onChange={handleFirstNameChange}
-                    error={invalidFields.firstName}
-                    helperText={invalidFields.firstName ? 'Field is required' : ''}
-                />
-                {/* Last Name */}
-                <TextField
-                    style={{ width: 200 }}
-                    label='Last Name*'
-                    value={lastName}
-                    onChange={handleLastNameChange}
-                    error={invalidFields.lastName}
-                    helperText={invalidFields.lastName ? 'Field is required' : ''}
-                />
-                {/* Birthday */}
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <Box>
-                      <DatePicker
-                        label='Birthday'
-                        onChange={handleBirthDayChange}
-                        value={dayjs(birthday)}
-                        disableFuture
-                        slotProps={{
-                          textField: {
-                            required: true,
-                            error: invalidFields.birthday,
-                            helperText: invalidFields.birthday ? 'Field is required' : '',
-                          }
-                        }}
-                      />
-                    </Box>
-                </LocalizationProvider>
-            </Box>
-
-            {/* Second Row: Phone Number, Email*/}
-            <Box sx={{ display: 'flex', alignItems: 'top', gap: 3 , mt: 2 }}>
-                {/* Phone Number */}
-                <TextField
-                    style={{ width: 250 }}
-                    label='Phone Number*'
-                    value={phoneNumber}
-                    onChange={handlePhoneNumberChange}
-                    error={invalidFields.phoneNumber}
-                    helperText={invalidFields.phoneNumber ? 'Field is required' : ''}
-                />
-                {/* Email */}
-                <TextField
-                    style={{ width: 250 }}
-                    label='Email*'
-                    type='email'
-                    value={email}
-                    onChange={handleEmailChange}
-                    error={invalidFields.email}
-                    helperText={invalidFields.email ? 'Field is required' : ''}
-                />
-            </Box>
-
-            {/* Third Row: Buttons */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-              <Button variant='contained' color='error' onClick={clearFormHandler}>
-                Clear All
-              </Button>
-              <Button variant='contained' color='primary' type='submit'>
-                {buttonLabel}
-              </Button>
-            </Box>
-          </form>
-        </Box>
-      </Box>
-    </Modal>
+      <DialogActions 
+        sx={{ 
+          p: 3,
+          pt: 2,
+          borderTop: '1px solid rgba(0, 0, 0, 0.05)',
+          gap: 1
+        }}
+      >
+        <Button 
+          onClick={onClose}
+          sx={{
+            color: 'text.secondary',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.04)'
+            }
+          }}
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          variant="contained"
+          sx={{
+            backgroundColor: '#1976D2',
+            '&:hover': {
+              backgroundColor: '#1565C0'
+            }
+          }}
+        >
+          {initialData ? 'Save Changes' : 'Add Customer'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
