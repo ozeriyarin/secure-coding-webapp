@@ -96,7 +96,7 @@ function RegisterForm({ setTab }) {
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        gap: 3,
+        gap: 2,
       }}
     >
       <Typography 
@@ -113,16 +113,7 @@ function RegisterForm({ setTab }) {
         Create Account
       </Typography>
 
-      <Typography 
-        variant="body1" 
-        sx={{ 
-          textAlign: 'center',
-          color: 'text.secondary',
-          mb: 0.5
-        }}
-      >
-        Fill in your details to get started
-      </Typography>
+      
 
       {message && (
         <Alert 
@@ -295,29 +286,7 @@ function RegisterForm({ setTab }) {
         Create Account
       </Button>
 
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center',
-        gap: 2,
-        mt: 1 
-      }}>
-        <Typography variant="body2" color="text.secondary">
-          Already have an account?{' '}
-          <Link 
-            component="button"
-            onClick={() => setTab(0)}
-            sx={{ 
-              color: '#1976D2',
-              textDecoration: 'none',
-              '&:hover': {
-                textDecoration: 'underline'
-              }
-            }}
-          >
-            Sign In
-          </Link>
-        </Typography>
-      </Box>
+     
     </Box>
   );
 }

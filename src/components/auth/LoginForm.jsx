@@ -61,7 +61,7 @@ function LoginForm() {
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        gap: 3,
+        gap: 2,
       }}
     >
       <Typography 
@@ -76,17 +76,6 @@ function LoginForm() {
         }}
       >
         Welcome Back
-      </Typography>
-
-      <Typography 
-        variant="body1" 
-        sx={{ 
-          textAlign: 'center',
-          color: 'text.secondary',
-          mb: 0.5
-        }}
-      >
-        Sign in to continue to your account
       </Typography>
 
       {message && (
