@@ -1,7 +1,27 @@
-import React, { useState } from 'react';
-import { TextField, Button, Typography, Box, IconButton, InputAdornment, Alert } from '@mui/material';
+import React, { useState, useMemo, useCallback } from 'react';
+import { TextField, Button, Typography, Box, IconButton, InputAdornment, Alert, Stack } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff, CheckCircle, Cancel } from '@mui/icons-material';
+
+/* ---------- constants ---------- */
+const passwordChecks = (pwd) => ({
+  length: pwd.length >= 10,
+  mixCase: /(?=.*[a-z])(?=.*[A-Z])/.test(pwd),
+  numbers: /(?=.*\d)/.test(pwd),
+  special: /[^A-Za-z0-9]/.test(pwd)
+});
+
+/* ---------- reusable UI ---------- */
+const Criterion = ({ ok, label }) => (
+  <Typography
+    variant="body2"
+    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+    color={ok ? 'success.main' : 'text.secondary'}
+  >
+    {ok ? <CheckCircle fontSize="small" /> : <Cancel fontSize="small" />}
+    {label}
+  </Typography>
+);
 
 function ChangePasswordForm() {
   const [oldPassword, setOldPassword] = useState('');
@@ -11,6 +31,7 @@ function ChangePasswordForm() {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [message, setMessage] = useState('');
+  const [errors, setErrors] = useState({});
   
   const location = useLocation();
   const { userId } = location.state || {};
@@ -20,16 +41,61 @@ function ChangePasswordForm() {
   const handleClickShowConfirmNewPassword = () => setShowConfirmNewPassword((show) => !show);
   const handleClickShowOldPassword = () => setShowOldPassword((show) => !show);
 
+  const validate = useCallback(
+    (field, val) => {
+      switch (field) {
+        case 'newPassword': {
+          const pc = passwordChecks(val);
+          return pc.length && pc.mixCase && pc.special && pc.numbers
+            ? ''
+            : 'Password must be at least 10 characters and include upper & lower-case letters, numbers, and special characters';
+        }
+        case 'confirmNewPassword':
+          return val === newPassword ? '' : 'passwords mismatch';
+        default:
+          return '';
+      }
+    },
+    [newPassword]
+  );
+
+  const handlePasswordChange = useCallback(
+    (field) => (e) => {
+      const val = e.target.value;
+      if (field === 'newPassword') {
+        setNewPassword(val);
+        setErrors((prev) => ({ 
+          ...prev, 
+          newPassword: validate('newPassword', val),
+          confirmNewPassword: validate('confirmNewPassword', confirmNewPassword)
+        }));
+      } else if (field === 'confirmNewPassword') {
+        setConfirmNewPassword(val);
+        setErrors((prev) => ({ 
+          ...prev, 
+          confirmNewPassword: validate('confirmNewPassword', val)
+        }));
+      } else {
+        setOldPassword(val);
+      }
+    },
+    [validate, confirmNewPassword]
+  );
+
+  const isFormValid = () => {
+    return oldPassword && newPassword && confirmNewPassword && 
+           Object.values(errors).every((e) => !e) &&
+           passwordChecks(newPassword).length && 
+           passwordChecks(newPassword).mixCase && 
+           passwordChecks(newPassword).special && 
+           passwordChecks(newPassword).numbers;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (newPassword.trim() === '' || confirmNewPassword.trim() === '') {
-      setMessage('Both fields are required.');
-      return;
-    }
-
-    if (newPassword !== confirmNewPassword) {
-      setMessage('New Password and Confirm New Password do not match.');
+    if (!isFormValid()) {
+      setMessage('Please fill all fields correctly and ensure password meets all requirements.');
       return;
     }
 
@@ -65,6 +131,8 @@ function ChangePasswordForm() {
       setMessage('An error occurred. Please try again later.');
     }
   };
+
+  const pc = useMemo(() => passwordChecks(newPassword), [newPassword]);
 
   return (
     <Box
@@ -121,7 +189,7 @@ function ChangePasswordForm() {
         label="Old Password"
         type={showOldPassword ? 'text' : 'password'}
         value={oldPassword}
-        onChange={(e) => setOldPassword(e.target.value)}
+        onChange={handlePasswordChange('oldPassword')}
         autoComplete="current-password"
         required
         fullWidth
@@ -156,7 +224,9 @@ function ChangePasswordForm() {
         label="New Password"
         type={showNewPassword ? 'text' : 'password'}
         value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
+        onChange={handlePasswordChange('newPassword')}
+        error={!!errors.newPassword}
+        helperText={errors.newPassword}
         autoComplete="new-password"
         required
         fullWidth
@@ -191,7 +261,9 @@ function ChangePasswordForm() {
         label="Confirm New Password"
         type={showConfirmNewPassword ? 'text' : 'password'}
         value={confirmNewPassword}
-        onChange={(e) => setConfirmNewPassword(e.target.value)}
+        onChange={handlePasswordChange('confirmNewPassword')}
+        error={!!errors.confirmNewPassword}
+        helperText={errors.confirmNewPassword}
         autoComplete="new-password"
         required
         fullWidth
@@ -222,9 +294,18 @@ function ChangePasswordForm() {
         }}
       />
 
+      {/* live password criteria */}
+      <Box sx={{ pl: 1 }}>
+        <Criterion ok={pc.length} label="At least 10 characters" />
+        <Criterion ok={pc.mixCase} label="Upper & lower-case letters" />
+        <Criterion ok={pc.numbers} label="At least one number" />
+        <Criterion ok={pc.special} label="At least one special character" />
+      </Box>
+
       <Button
         type="submit"
         variant="contained"
+        disabled={!isFormValid()}
         fullWidth
         sx={{
           mt: 2,

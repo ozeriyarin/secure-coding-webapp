@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   TextField,
   Button,
@@ -11,10 +11,29 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff, CheckCircle, Cancel } from '@mui/icons-material';
 
-/**
- * RegisterForm component
- * Displays a registration form with inline validation and live password-strength feedback
- */
+/* ---------- constants ---------- */
+const NAME_REGEX = /^[a-zA-Z\u0590-\u05FF]+$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const passwordChecks = (pwd) => ({
+  length: pwd.length >= 10,
+  mixCase: /(?=.*[a-z])(?=.*[A-Z])/.test(pwd),
+  numbers: /(?=.*\d)/.test(pwd),
+  special: /[^A-Za-z0-9]/.test(pwd)
+});
+
+/* ---------- reusable UI ---------- */
+const Criterion = ({ ok, label }) => (
+  <Typography
+    variant="body2"
+    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+    color={ok ? 'success.main' : 'text.secondary'}
+  >
+    {ok ? <CheckCircle fontSize="small" /> : <Cancel fontSize="small" />}
+    {label}
+  </Typography>
+);
+
 function RegisterForm({ setTab }) {
   /* ---------- state ---------- */
   const [values, setValues] = useState({
@@ -29,61 +48,54 @@ function RegisterForm({ setTab }) {
   const [statusMsg, setStatusMsg] = useState('');
   const [showPwd, setShowPwd] = useState({ pwd: false, confirm: false });
 
-  /* ---------- regex patterns ---------- */
-  const patterns = {
-    name: /^[a-zA-Z\u0590-\u05FF]+$/,
-    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  };
-
-  /* ---------- password helpers ---------- */
-  const passwordChecks = (pwd) => ({
-    length: pwd.length >= 8,
-    mixCase: /(?=.*[a-z])(?=.*[A-Z])/.test(pwd),
-    special: /[^A-Za-z0-9]/.test(pwd)
-  });
-
-  /* ---------- field-level validation ---------- */
-  const validate = (field, val) => {
-    switch (field) {
-      case 'firstName':
-      case 'lastName':
-        return patterns.name.test(val) ? '' : 'letters only';
-      case 'email':
-        return patterns.email.test(val) ? '' : 'invalid email';
-      case 'password': {
-        const pc = passwordChecks(val);
-        return pc.length && pc.mixCase && pc.special ? '' : 'weak password';
+  /* ---------- validation ---------- */
+  const validate = useCallback(
+    (field, val) => {
+      switch (field) {
+        case 'firstName':
+        case 'lastName':
+          return NAME_REGEX.test(val) ? '' : 'letters only';
+        case 'email':
+          return EMAIL_REGEX.test(val) ? '' : 'invalid email';
+        case 'password': {
+          const pc = passwordChecks(val);
+          return pc.length && pc.mixCase && pc.special && pc.numbers
+            ? ''
+            : 'Password must be at least 10 characters and include upper & lower-case letters, numbers, and special characters';
+        }
+        case 'confirmPassword':
+          return val === values.password ? '' : 'passwords mismatch';
+        default:
+          return '';
       }
-      case 'confirmPassword':
-        return val === values.password ? '' : 'passwords mismatch';
-      default:
-        return '';
-    }
-  };
+    },
+    [values.password]
+  );
 
-  /* ---------- input change handler ---------- */
-  const handleChange = (field) => (e) => {
-    const val = e.target.value;
-    setValues({ ...values, [field]: val });
-    setErrors({ ...errors, [field]: validate(field, val) });
-    if (field === 'password') {
-      // re-validate confirmPassword when password changes
-      setErrors((prev) => ({
-        ...prev,
-        confirmPassword: validate('confirmPassword', values.confirmPassword)
-      }));
-    }
-  };
+  /* ---------- handlers ---------- */
+  const handleChange = useCallback(
+    (field) => (e) => {
+      const val = e.target.value;
+      setValues((prev) => ({ ...prev, [field]: val }));
+      setErrors((prev) => ({ ...prev, [field]: validate(field, val) }));
 
-  /* ---------- password visibility toggle ---------- */
+      if (field === 'password') {
+        // re-validate confirmPassword when password changes
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: validate('confirmPassword', values.confirmPassword)
+        }));
+      }
+    },
+    [validate, values.confirmPassword]
+  );
+
   const togglePwd = (key) =>
     setShowPwd((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  /* ---------- overall form validity ---------- */
   const isFormValid = () =>
     Object.values(values).every(Boolean) && Object.values(errors).every((e) => !e);
 
-  /* ---------- submit handler ---------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isFormValid()) {
@@ -123,31 +135,14 @@ function RegisterForm({ setTab }) {
     }
   };
 
-  /* ---------- reusable UI for password criteria ---------- */
-  const Criterion = ({ ok, label }) => (
-    <Typography
-      variant="body2"
-      sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-      color={ok ? 'success.main' : 'text.secondary'}
-    >
-      {ok ? <CheckCircle fontSize="small" /> : <Cancel fontSize="small" />}
-      {label}
-    </Typography>
-  );
-
-  /* ---------- live password checks ---------- */
-  const pc = passwordChecks(values.password);
+  /* ---------- derived data ---------- */
+  const pc = useMemo(() => passwordChecks(values.password), [values.password]);
 
   /* ---------- render ---------- */
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
       <Stack spacing={2}>
-        <Typography
-          variant="h4"
-          textAlign="center"
-          fontWeight={600}
-          color="primary.main"
-        >
+        <Typography variant="h4" textAlign="center" fontWeight={600} color="primary.main">
           Create Account
         </Typography>
 
@@ -228,10 +223,11 @@ function RegisterForm({ setTab }) {
           }}
         />
 
-        {/* live password criteria (placed under confirm-password as requested) */}
+        {/* live password criteria */}
         <Box sx={{ pl: 1 }}>
-          <Criterion ok={pc.length} label="At least 8 characters" />
+          <Criterion ok={pc.length} label="At least 10 characters" />
           <Criterion ok={pc.mixCase} label="Upper & lower-case letters" />
+          <Criterion ok={pc.numbers} label="At least one number" />
           <Criterion ok={pc.special} label="At least one special character" />
         </Box>
 

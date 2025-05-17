@@ -1,28 +1,53 @@
-import React from 'react';
-import { AppBar, Toolbar, Typography, Box, Container } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Box,
+  Container
+} from '@mui/material';
 import SecurityIcon from '@mui/icons-material/Security';
-import UserMenu from './UserMenu';
 import { useLocation, useNavigate } from 'react-router-dom';
+import UserMenu from './UserMenu';
 import logo from '/src/assets/images/logo.PNG';
 
 /**
- * @description
- * This component displays the Navbar for the application.
- * @returns Navbar component to display the Navbar for the application.
+ * Navbar component
+ * – Persists user ID in localStorage so the menu remains visible
+ *   even after refresh or browser-back navigation.
  */
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const currentPath = location.pathname;
-  const userId = location.state?.userId;
-  
-  // Show UserMenu on all routes except login/register page
-  const shouldShowUserMenu = currentPath !== '/';
 
+  /* ---------- persistent userId ---------- */
+  const [userId, setUserId] = useState(() =>
+    location.state?.userId || localStorage.getItem('userId')
+  );
+
+  /* store userId that arrives via navigate(..., { state }) */
+  useEffect(() => {
+    if (location.state?.userId) {
+      localStorage.setItem('userId', location.state.userId);
+      setUserId(location.state.userId);
+    }
+  }, [location.state]);
+
+  const currentPath         = location.pathname;
+  const shouldShowUserMenu  = currentPath !== '/';
+
+  /* ---------- handlers ---------- */
+  const handleLogoClick = () => {
+    if (shouldShowUserMenu && userId) {
+      navigate('/home-screen', { state: { userId } });
+    }
+  };
+
+  /* ---------- render ---------- */
   return (
-    <AppBar 
-      position="fixed" 
-      sx={{ 
+    <AppBar
+      position="fixed"
+      sx={{
         backgroundColor: '#ffffff',
         borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
         boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
@@ -30,45 +55,34 @@ export default function Navbar() {
       }}
     >
       <Container maxWidth={false}>
-        <Toolbar 
-          sx={{ 
+        <Toolbar
+          sx={{
             height: '64px',
             px: { xs: 2, sm: 3, md: 4, lg: 6, xl: 10 }
           }}
         >
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1, 
+          {/* logo + title */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
               flexGrow: 1,
               cursor: shouldShowUserMenu ? 'pointer' : 'default'
             }}
-            onClick={() => {
-              if (shouldShowUserMenu && userId) {
-                navigate('/home-screen', { state: { userId } });
-              }
-            }}
+            onClick={handleLogoClick}
           >
-            <SecurityIcon 
-              sx={{ 
-                fontSize: 32, 
-                color: '#1976D2',
-                mr: 1
-              }} 
+            <SecurityIcon
+              sx={{ fontSize: 32, color: '#1976D2', mr: 1 }}
             />
             <img
               src={logo}
               alt="Secure Coding Logo"
-              style={{ 
-                width: '100px',
-                height: '50px',
-                objectFit: 'contain'
-              }}
+              style={{ width: '100px', height: '50px', objectFit: 'contain' }}
             />
-            <Typography 
-              variant="h6" 
-              sx={{ 
+            <Typography
+              variant="h6"
+              sx={{
                 color: '#1976D2',
                 fontWeight: 600,
                 letterSpacing: '-0.5px',
@@ -79,9 +93,8 @@ export default function Navbar() {
             </Typography>
           </Box>
 
-          {shouldShowUserMenu && userId && (
-            <UserMenu userId={userId} />
-          )}
+          {/* user menu */}
+          {shouldShowUserMenu && userId && <UserMenu userId={userId} />}
         </Toolbar>
       </Container>
     </AppBar>
