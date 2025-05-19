@@ -1,133 +1,149 @@
 import React, { useState } from 'react';
-import { Container, TextField, Button, Typography, Box , Link , IconButton, InputAdornment , Alert } from '@mui/material';
+import {
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Link,
+  IconButton,
+  InputAdornment,
+  Alert,
+  Stack
+} from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * LoginForm component
+ * Shows a login form with generic error handling to avoid disclosing which field failed
+ */
 function LoginForm() {
+  /* ---------- state ---------- */
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // State to hold an error or status message
-  const [message, setMessage] = useState('');
-
+  const [statusMsg, setStatusMsg] = useState('');
   const navigate = useNavigate();
 
-  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  /* ---------- constants ---------- */
+  const GENERIC_ERROR = 'Invalid username or password. Please try again.';
 
+  /* ---------- helpers ---------- */
+  const handleClickShowPassword = () =>
+    setShowPassword((prev) => !prev);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    /* client-side format check (still uses generic message) */
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
-      setMessage('Invalid email format.');
+      setStatusMsg(GENERIC_ERROR);
       return;
-    } else {
-      setMessage(''); // Clear previous messages if validation passes
-    }  
-    
-    const username = email.split('@')[0];
+    }
+
     const data = {
-      username: username,
-      password: password,
+      username: email.split('@')[0],
+      password
     };
 
     try {
-      const response = await fetch('/api/login', {
+      const res = await fetch('/api/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        setMessage(errorData.message || 'Your credentials are incorrect. Please try again.');
+
+      if (!res.ok) {
+        /* always show the same error to prevent user enumeration */
+        setStatusMsg(GENERIC_ERROR);
         return;
       }
-      const responseData = await response.json();
-      setMessage('Login successful!');
+
+      const json = await res.json();
+      setStatusMsg('Login successful!');
       setEmail('');
       setPassword('');
-      navigate('/home-screen' , { state: { userId: responseData.user.user_id } }); // Redirect to home screen with userId
-    } catch (error) {
-      console.error('Error during login:', error);
-      setMessage('An error occurred. Please try again later.');
+      navigate('/home-screen', { state: { userId: json.user.user_id } });
+    } catch {
+      /* network / unexpected error */
+      setStatusMsg('Something went wrong. Please try again later.');
     }
   };
 
+  /* ---------- render ---------- */
   return (
-    <Container maxWidth="sm">
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{
-          mt: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <Typography variant="h4" align="center">Login</Typography>
+    <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+      <Stack spacing={2}>
+        <Typography
+          variant="h4"
+          textAlign="center"
+          fontWeight={600}
+          color="primary.main"
+        >
+          Welcome Back
+        </Typography>
 
-        {message && (
-          <Alert severity={message.includes('successful') ? 'success' : 'error'}>
-            {message}
+        {statusMsg && (
+          <Alert
+            severity={
+              statusMsg.startsWith('Login successful') ? 'success' : 'error'
+            }
+          >
+            {statusMsg}
           </Alert>
         )}
-        
+
         <TextField
           label="Email"
-          variant="outlined"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          autoComplete='email'
+          autoComplete="email"
           required
+          fullWidth
         />
+
         <TextField
           label="Password"
-          variant="outlined"
           type={showPassword ? 'text' : 'password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          autoComplete='current-password'
+          autoComplete="current-password"
           required
-          slotProps={{
-            input: {
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="toggle password visibility"
-                    onClick={handleClickShowPassword}
-                    edge="end"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            },
+          fullWidth
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={handleClickShowPassword} edge="end">
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            )
           }}
         />
 
-        {/* Forgot Password Link */}
-        <Box sx={{ textAlign: 'right' }}>
-          <Link 
-            href="/forgot-password" 
-            target="_blank" 
-            rel="noopener noreferrer" 
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          sx={{ py: 1.5, textTransform: 'none', fontSize: '1rem', fontWeight: 500 }}
+        >
+          Sign In
+        </Button>
+
+        <Box display="flex" justifyContent="center" mt={1}>
+          <Link
+            href="#"
+            onClick={() => navigate('/forgot-password')}
             underline="hover"
+            color="text.secondary"
           >
             Forgot Password?
           </Link>
         </Box>
-
-        <Button type="submit" variant="contained" color="primary">
-          Login
-        </Button>
-      </Box>
-    </Container>
+      </Stack>
+    </Box>
   );
 }
 

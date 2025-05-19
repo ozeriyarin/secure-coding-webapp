@@ -9,8 +9,13 @@ import {
   Button,
   Dialog,
   DialogActions,
+  Paper,
+  Container,
+  Divider,
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import AddIcon from '@mui/icons-material/Add';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 
 import CustomerTable from './CustomerTable';
 import CustomerFormModal from "./CustomerFormModel";
@@ -28,13 +33,40 @@ import CustomerFormModal from "./CustomerFormModel";
  */
 function SuccessDialog({ open, message, onClose }) {
   return (
-    <Dialog open={open} onClose={onClose}>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <CheckCircleOutlineIcon color='success' />
-        <Typography variant='body1'>{message}</Typography>
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        }
+      }}
+    >
+      <Box sx={{ 
+        p: 3, 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2,
+        minWidth: 300 
+      }}>
+        <CheckCircleOutlineIcon color="success" sx={{ fontSize: 28 }} />
+        <Typography variant="body1" sx={{ color: 'text.primary' }}>{message}</Typography>
       </Box>
-      <DialogActions>
-        <Button onClick={onClose} color='primary'>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button 
+          onClick={onClose} 
+          variant="contained"
+          sx={{
+            backgroundColor: '#1976D2',
+            '&:hover': {
+              backgroundColor: '#1565C0',
+            },
+            textTransform: 'none',
+            borderRadius: 1,
+            px: 3
+          }}
+        >
           Close
         </Button>
       </DialogActions>
@@ -54,256 +86,213 @@ SuccessDialog.propTypes = {
 // #####################################################################
 /**
  * Main component of the Home view.
- * This component displays table for a customers.
- * edit existing customer, add and remove customers.
- * @returns {JSX.Element} he main component displaying the customer-related content.
+ * This component displays table for customers and allows adding new customers.
+ * @returns {JSX.Element} The main component displaying the customer-related content.
  */
 export default function HomeScreen() {
-  // ============ States ===============
   const [customers, setCustomers] = useState([]);
-//   const [, setLoading] = useState(true);
-
-  // State that holds either null (for adding) or an customer object (for editing)
-  const [modalData, setModalData] = useState(null);
-  // State to manage the visibility of addition modal
   const [isModelOpen, setIsModelOpen] = useState(false);
-
-  // State to manage visibility of dialog of adding/ editing success
-  const [isSuccessDialogShown, setIsSuccessDialogShown] = useState(false);
-  // State to manage the message of adding/ editing success
-  const [successMessage, setSuccessMessage] = useState('');
-
+  
   const navigate = useNavigate();
-
   const location = useLocation();
   const { userId } = location.state || {};
 
-
-  // useEffect to fetch customers from DB when the component mounts
+  // Fetch customers when component mounts
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        // Fetch all customers from the database
-        const allCustomers = await fetch('/api/customers/get_all/', {
+        const response = await fetch('/api/customers/get_all/', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
         });
-        if (!allCustomers.ok) {
-          const errorData = await allCustomers.json();
+        if (!response.ok) {
+          const errorData = await response.json();
           console.error('Error fetching customers:', errorData.message);
           return;
         }
-        const customersData = await allCustomers.json();
-        setCustomers(customersData.customers); // Set the customers state with the fetched data
-        console.log('Fetched customers:', customersData.customers);
-
-        }catch (error) {
+        const customersData = await response.json();
+        setCustomers(customersData.customers);
+      } catch (error) {
         console.error('Error fetching customers:', error);
       }
     };
     fetchCustomers();
   }, []);
-// ===========================
 
-  /* ====================================================================  */
-  /*                              Handlers                                 */
-  /* ====================================================================  */
-  /**
-//    * Handler which is called when the year changes
-//    * @param e - The event object from the Select component.
-//    */
-//   const handleYearChange = (e) => {
-//     setYear(e.target.value);
-//   };
-
-//   /**
-//    * Handler which is called when the year changes
-//    * @param e - The event object from the Select component.
-//    */
-//   const handleMonthChange = (e) => {
-//     setMonth(e.target.value);
-//   };
-
-
-  /**
-   * Handler which is called as a result of pressing "Add Customer"
-   * Sets state of isModalOpen to true
-   */
-  // Opening the 'Add' modal => pass `null` as `modalData`
   const openAddModal = () => {
-    setModalData(null); // null means create
     setIsModelOpen(true);
   };
 
-  /**
-   * Handler which is called as a result of pressing "Edit Customer"
-   * Sets state of isModalOpen to true
-   * @param customer - The customer object to be edited.
-   */
-  const openEditModal = (customer) => {
-    setModalData(customer);
-    setIsModelOpen(true);
-  };
-
-  /**
-   * Handler which is called as a result of closing the modal
-   * Sets state of isModalOpen to false
-   */
   const closeModal = () => {
     setIsModelOpen(false);
   };
 
-  /**
-   * Handler which is called after user closes the dialog of success message.
-   * Sets state of isSuccessDialogShown to false
-   */
-  const handleCloseSuccessDialog = () => {
-    setIsSuccessDialogShown(false);
-  };
-
-  /**
-   * Handles the form submission (either adding or editing a customer).
-   * If isEditMode => update an existing customer. Else => add a new one.
-   * @param customerDetails - The details of the customer to add or update.
-   * @param isEditMode - Whether the operation is to edit an existing customer.
-   * @returns {Promise<void>} - A promise that resolves when the customers are re-fetched and filtered.
-   */
-  const handleModalSubmit = (customerDetails, isEditMode) => {
+  const handleModalSubmit = async (customerDetails) => {
     try {
-      if (isEditMode) {
-        const { id, ...updatedFields } = customerDetails;
-        setSuccessMessage('The customer was updated successfully!');
-      } else {
-        /**
-          Add a new customer
-          id: contains the value of the `id` key from the object.
-          rest: a new object containing all other keys and values remaining in the object, except for the `id` key.
-        **/
-        const id = uuidv4();
-        const newCustomer  = { ...customerDetails , id }; // copy of customerDetails
-        setCustomers((prevCustomers) => [...prevCustomers, newCustomer]);
-        setSuccessMessage('The customer was added successfully!');
+      const response = await fetch('/api/customers/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(customerDetails),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add customer');
       }
 
-      // Close the modal
+      // Refresh customers list
+      const updatedResponse = await fetch('/api/customers/get_all/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (updatedResponse.ok) {
+        const data = await updatedResponse.json();
+        setCustomers(data.customers);
+      }
+
       closeModal();
-      // Show success dialog
-      setIsSuccessDialogShown(true);
-
-      // Re-fetch updated list of customers
     } catch (error) {
-      console.error('Error adding/updating customer:', error);
-    }
-  };
-    // Logout the user
-    function handleLogout() {
-        // Redirect to the login page
-        navigate('/');
-    }
-
-    // Change password
-    function handleChangePassword() {
-        // Redirect to the change password page
-        navigate('/change-password' , { state: { userId: userId } });
-    }
-
-  /**
-   * Handler for remove an expense from the IndexedDB by its ID and re-fetches the updated list of expenses
-   * for the selected month and year.
-   * @param id - The ID of the expense to remove from the database.
-   * @returns {Promise<void>} - A promise that resolves when the expense is removed and the expenses are re-fetched.
-   */
-  const handleRemove = async (id) => {
-    try {
-      await indexDB.removeExpense(id);
-      // Re-fetch updated list of expenses
-      const all = await indexDB.getAllExpenses();
-      filterExpensesByMonthYear(all, month, year);
-    } catch (error) {
-      console.error('Error removing expense:', error);
+      console.error('Error:', error);
     }
   };
 
-  /* ====================================================================  */
-  /*                     Main {JSX.Element} To Display                     */
-  /* ====================================================================  */
+  // Navigation handlers
+  const handleLogout = () => {
+    navigate('/');
+  };
+
+  const handleChangePassword = () => {
+    navigate('/change-password', { state: { userId } });
+  };
+
   return (
-    <Box sx={{
-        position: 'absolute',
-        top: '10%',
-        left: '11%',
-        width: '100%', 
-        maxWidth: '1200px',   
-        mx: 'auto',            
-        p: 2,                  
-        height: '100%',
-        overflowY: 'auto',
-      }}>
-      {/* Title */}
-      <Typography variant='h4' gutterBottom style={{ color: '#fff', marginBottom: 40 }}>
-        Customers Table
-      </Typography>
-
-      {/* Logout display */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 5,
-          right: 0,
-          padding: '10px  ',
-          margin: '10px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    <Box sx={{ 
+      height: '100vh',  // Changed from minHeight to height
+      backgroundColor: '#f8fafc',
+      pt: '64px', // Height of navbar
+      display: 'flex',  // Added display flex
+      flexDirection: 'column',  // Added flex direction
+      overflow: 'hidden'  // Prevent outer scrolling
+    }}>
+      <Container 
+        maxWidth={false}
+        sx={{ 
+          py: 4,
+          px: { xs: 2, sm: 3, md: 4, lg: 6, xl: 8 },
+          height: 'calc(100% - 64px)',  // Take remaining height
+          display: 'flex',  // Added display flex
+          flexDirection: 'column',  // Added flex direction
+          overflow: 'hidden'  // Prevent container scrolling
         }}
       >
-        <Button variant='contained' color='primary' sx={{ fontWeight: 'bold' , marginRight: 2}}
-          onClick={handleChangePassword}>
-          Change Password
-        </Button>
-        
-        <Button variant='contained' color='primary' sx={{ fontWeight: 'bold' }}
-          onClick={handleLogout}>
-          Logout
-        </Button>
-
-        
-      </Box>
-
-      {/* Form Section */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        {/* Add Customer Button */}
-        <Button
-          variant='contained'
-          color='primary'
-          onClick={openAddModal}
+        {/* Header with Title and Add Button */}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            mb: 3,
+            gap: 2,
+            width: '100%'
+          }}
         >
-          Add New Customer
-        </Button>
-      </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <DashboardIcon sx={{ fontSize: 32, color: '#1976D2' }} />
+            <Typography 
+              variant="h4" 
+              sx={{ 
+                color: '#1976D2',
+                fontSize: { xs: '1.75rem', sm: '2.25rem' },
+                fontWeight: 700,
+                letterSpacing: '-0.5px',
+              }}
+            >
+              Customer Management
+            </Typography>
+          </Box>
 
-      {/* Customer Table */}
-      <CustomerTable
-        customers={customers}
-        handleEdit={(customerId) => {
-          // Find customer using customerId directly
-          const selectedCustomer = customers.find((customer) => customer.id === customerId);
-          openEditModal(selectedCustomer);
-        }}
-        handleRemove={handleRemove}
-      />
+          <Button
+            variant="contained"
+            onClick={openAddModal}
+            startIcon={<AddIcon />}
+            sx={{
+              backgroundColor: '#1976D2',
+              borderRadius: 1,
+              textTransform: 'none',
+              px: 3,
+              py: 1.5,
+              fontSize: '0.95rem',
+              fontWeight: 500,
+              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+              whiteSpace: 'nowrap',
+              minWidth: 'auto',
+              '&:hover': {
+                backgroundColor: '#1565C0',
+                boxShadow: '0 6px 16px rgba(25, 118, 210, 0.3)'
+              }
+            }}
+          >
+            Add Customer
+          </Button>
+        </Box>
 
-      {/* Modal and Dialog Components */}
+        {/* Main Content */}
+        <Paper 
+          elevation={0}
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(0, 0, 0, 0.05)',
+            width: '100%',
+            mb: 3,
+            overflow: 'hidden',  // Prevent paper scrolling
+            '&:hover': {
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.1)'
+            }
+          }}
+        >
+          <Box 
+            sx={{ 
+              width: '100%',
+              height: '100%',  // Take full height
+              overflow: 'auto',  // Enable scrolling only for the table container
+              '&::-webkit-scrollbar': {
+                width: '8px',
+                height: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                background: '#555',
+              }
+            }}
+          >
+            <CustomerTable customers={customers} />
+          </Box>
+        </Paper>
+
+        {/* Add Customer Modal */}
         <CustomerFormModal
-            open={isModelOpen}
-            onClose={closeModal}
-            onSubmit={handleModalSubmit}
-            customer={modalData}
+          open={isModelOpen}
+          onClose={closeModal}
+          onSubmit={handleModalSubmit}
         />
-
-      {/* Success Dialog */}
-      <SuccessDialog open={isSuccessDialogShown} onClose={handleCloseSuccessDialog} message={successMessage} />
+      </Container>
     </Box>
   );
 }

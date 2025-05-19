@@ -1,29 +1,102 @@
-import { AppBar, Toolbar, Typography, Box } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Box,
+  Container
+} from '@mui/material';
+import SecurityIcon from '@mui/icons-material/Security';
+import { useLocation, useNavigate } from 'react-router-dom';
+import UserMenu from './UserMenu';
 import logo from '/src/assets/images/logo.PNG';
 
 /**
- * @description
- * This component displays the Navbar for the application.
- * @returns Navbar component to display the Navbar for the application.
+ * Navbar component
+ * – Persists user ID in localStorage so the menu remains visible
+ *   even after refresh or browser-back navigation.
  */
 export default function Navbar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  /* ---------- persistent userId ---------- */
+  const [userId, setUserId] = useState(() =>
+    location.state?.userId || localStorage.getItem('userId')
+  );
+
+  /* store userId that arrives via navigate(..., { state }) */
+  useEffect(() => {
+    if (location.state?.userId) {
+      localStorage.setItem('userId', location.state.userId);
+      setUserId(location.state.userId);
+    }
+  }, [location.state]);
+
+  const currentPath         = location.pathname;
+  const shouldShowUserMenu  = currentPath !== '/';
+
+  /* ---------- handlers ---------- */
+  const handleLogoClick = () => {
+    if (shouldShowUserMenu && userId) {
+      navigate('/home-screen', { state: { userId } });
+    }
+  };
+
+  /* ---------- render ---------- */
   return (
     <AppBar
       position="fixed"
-      sx={{ top: 0, backgroundColor: '#04265a', color: 'white', userSelect: 'none' }}
+      sx={{
+        backgroundColor: '#ffffff',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+        zIndex: (theme) => theme.zIndex.drawer + 1
+      }}
     >
-      <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-          <img
-            src={logo}
-            alt="Secure Coding Logo"
-            style={{ width: '100px', height: '50px', marginRight: '16px' }}
-          />
-          <Typography variant="h6" component="div" fontFamily="GaretBook">
-            Secure Coding App
-          </Typography>
-        </Box>
-      </Toolbar>
+      <Container maxWidth={false}>
+        <Toolbar
+          sx={{
+            height: '64px',
+            px: { xs: 2, sm: 3, md: 4, lg: 6, xl: 10 }
+          }}
+        >
+          {/* logo + title */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              flexGrow: 1,
+              cursor: shouldShowUserMenu ? 'pointer' : 'default'
+            }}
+            onClick={handleLogoClick}
+          >
+            <SecurityIcon
+              sx={{ fontSize: 32, color: '#1976D2', mr: 1 }}
+            />
+            <img
+              src={logo}
+              alt="Secure Coding Logo"
+              style={{ width: '100px', height: '50px', objectFit: 'contain' }}
+            />
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#1976D2',
+                fontWeight: 600,
+                letterSpacing: '-0.5px',
+                fontSize: { xs: '1.25rem', sm: '1.5rem' }
+              }}
+            >
+              Secure Coding App
+            </Typography>
+          </Box>
+
+          {/* user menu */}
+          {shouldShowUserMenu && userId && <UserMenu userId={userId} />}
+        </Toolbar>
+      </Container>
     </AppBar>
   );
 }
