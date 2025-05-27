@@ -48,8 +48,8 @@ export default function Navbar() {
     <AppBar
       position="fixed"
       sx={{
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
         boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
         zIndex: (theme) => theme.zIndex.drawer + 1
       }}
@@ -73,7 +73,7 @@ export default function Navbar() {
             onClick={handleLogoClick}
           >
             <SecurityIcon
-              sx={{ fontSize: 32, color: '#1976D2', mr: 1 }}
+              sx={{ fontSize: 32, color: 'primary.main', mr: 1 }}
             />
             <img
               src={logo}
@@ -83,7 +83,7 @@ export default function Navbar() {
             <Typography
               variant="h6"
               sx={{
-                color: '#1976D2',
+                color: 'primary.main',
                 fontWeight: 600,
                 letterSpacing: '-0.5px',
                 fontSize: { xs: '1.25rem', sm: '1.5rem' }

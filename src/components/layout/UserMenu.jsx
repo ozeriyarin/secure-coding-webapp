@@ -14,10 +14,14 @@ import {
 import LockIcon from '@mui/icons-material/Lock';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function UserMenu({ userId }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
+  const { darkMode, toggleTheme } = useTheme();
   
   const handleOpenMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -50,7 +54,7 @@ export default function UserMenu({ userId }) {
           aria-haspopup="true"
           aria-expanded={Boolean(anchorEl) ? 'true' : undefined}
         >
-          <Avatar sx={{ width: 32, height: 32, bgcolor: '#1976D2' }}>
+          <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
             <PersonIcon />
           </Avatar>
         </IconButton>
@@ -90,19 +94,40 @@ export default function UserMenu({ userId }) {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
+        
+
         <MenuItem onClick={handleChangePassword}>
           <ListItemIcon>
-            <LockIcon fontSize="small" sx={{ color: '#1976D2' }} />
+            <LockIcon fontSize="small" sx={{ color: 'primary.main' }} />
           </ListItemIcon>
           <ListItemText 
             primary="Change Password"
             primaryTypographyProps={{
               fontSize: '0.9rem',
-              fontWeight: 500
+              fontWeight: 500,
+              color: 'text.primary'
             }}
           />
         </MenuItem>
         
+        <MenuItem onClick={toggleTheme}>
+          <ListItemIcon>
+            {darkMode ? (
+              <LightModeIcon fontSize="small" sx={{ color: 'primary.main' }} />
+            ) : (
+              <DarkModeIcon fontSize="small" sx={{ color: 'primary.main' }} />
+            )}
+          </ListItemIcon>
+          <ListItemText 
+            primary={darkMode ? "Light Mode" : "Dark Mode"}
+            primaryTypographyProps={{
+              fontSize: '0.9rem',
+              fontWeight: 500,
+              color: 'text.primary'
+            }}
+          />
+        </MenuItem>
+
         <Divider sx={{ my: 1 }} />
         
         <MenuItem onClick={handleLogout}>
@@ -114,7 +139,7 @@ export default function UserMenu({ userId }) {
             primaryTypographyProps={{
               fontSize: '0.9rem',
               fontWeight: 500,
-              color: '#d32f2f'
+              color: 'error.main'
             }}
           />
         </MenuItem>

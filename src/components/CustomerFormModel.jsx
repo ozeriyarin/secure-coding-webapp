@@ -110,7 +110,7 @@ export default function CustomerFormModal({
       date: !formData.date,
     };
 
-    const namePattern = /^[A-Za-z\u0590-\u05FF\s'-]{2,50}$/;    // letters/spaces/’–, length 2–50
+    const namePattern = /^[A-Za-z\u0590-\u05FF\s'-]{2,50}$/;    // letters/spaces/'–, length 2–50
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;          // basic email
     const phonePattern = /^\+?[0-9]{7,15}$/;            // 7-15 digits,'+' at the start   
 
@@ -165,7 +165,8 @@ export default function CustomerFormModal({
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           m: 2,
           maxHeight: 'calc(100% - 64px)',
-          maxWidth: { sm: 600 }
+          maxWidth: { sm: 600 },
+          bgcolor: 'background.paper'
         }
       }}
     >
@@ -174,14 +175,15 @@ export default function CustomerFormModal({
           pb: 2,
           pt: 3,
           px: 3,
-          borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
+          borderBottom: '1px solid',
+          borderColor: 'divider'
         }}
       >
         <Typography 
           variant="h5" 
           sx={{ 
             fontWeight: 600,
-            color: '#1976D2',
+            color: 'primary.main',
             fontSize: '1.5rem'
           }}
         >
@@ -196,9 +198,16 @@ export default function CustomerFormModal({
           '&::-webkit-scrollbar': {
             width: '8px'
           },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'background.default'
+          },
           '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-            borderRadius: '4px'
+            bgcolor: 'text.secondary',
+            borderRadius: '4px',
+            opacity: 0.5
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            bgcolor: 'text.primary'
           }
         }}
       >
@@ -281,7 +290,8 @@ export default function CustomerFormModal({
         sx={{ 
           p: 3,
           pt: 2,
-          borderTop: '1px solid rgba(0, 0, 0, 0.05)',
+          borderTop: '1px solid',
+          borderColor: 'divider',
           gap: 1
         }}
       >
@@ -290,7 +300,7 @@ export default function CustomerFormModal({
           sx={{
             color: 'text.secondary',
             '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.04)'
+              bgcolor: 'action.hover'
             }
           }}
         >
@@ -300,10 +310,8 @@ export default function CustomerFormModal({
           onClick={handleSubmit}
           variant="contained"
           sx={{
-            backgroundColor: '#1976D2',
-            '&:hover': {
-              backgroundColor: '#1565C0'
-            }
+            textTransform: 'none',
+            px: 3
           }}
         >
           {initialData ? 'Save Changes' : 'Add Customer'}
@@ -319,7 +327,5 @@ CustomerFormModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   initialData: PropTypes.object, // or null
-  year: PropTypes.number.isRequired,
-  month: PropTypes.number.isRequired,
 };
 

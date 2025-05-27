@@ -58,10 +58,6 @@ function SuccessDialog({ open, message, onClose }) {
           onClick={onClose} 
           variant="contained"
           sx={{
-            backgroundColor: '#1976D2',
-            '&:hover': {
-              backgroundColor: '#1565C0',
-            },
             textTransform: 'none',
             borderRadius: 1,
             px: 3
@@ -173,22 +169,22 @@ export default function HomeScreen() {
 
   return (
     <Box sx={{ 
-      height: '100vh',  // Changed from minHeight to height
-      backgroundColor: '#f8fafc',
-      pt: '64px', // Height of navbar
-      display: 'flex',  // Added display flex
-      flexDirection: 'column',  // Added flex direction
-      overflow: 'hidden'  // Prevent outer scrolling
+      height: '100vh',
+      bgcolor: 'background.default',
+      pt: '64px',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
     }}>
       <Container 
         maxWidth={false}
         sx={{ 
           py: 4,
           px: { xs: 2, sm: 3, md: 4, lg: 6, xl: 8 },
-          height: 'calc(100% - 64px)',  // Take remaining height
-          display: 'flex',  // Added display flex
-          flexDirection: 'column',  // Added flex direction
-          overflow: 'hidden'  // Prevent container scrolling
+          height: 'calc(100% - 64px)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
         }}
       >
         {/* Header with Title and Add Button */}
@@ -203,11 +199,11 @@ export default function HomeScreen() {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <DashboardIcon sx={{ fontSize: 32, color: '#1976D2' }} />
+            <DashboardIcon sx={{ fontSize: 32, color: 'primary.main' }} />
             <Typography 
               variant="h4" 
               sx={{ 
-                color: '#1976D2',
+                color: 'primary.main',
                 fontSize: { xs: '1.75rem', sm: '2.25rem' },
                 fontWeight: 700,
                 letterSpacing: '-0.5px',
@@ -222,8 +218,6 @@ export default function HomeScreen() {
             onClick={openAddModal}
             startIcon={<AddIcon />}
             sx={{
-              backgroundColor: '#1976D2',
-              borderRadius: 1,
               textTransform: 'none',
               px: 3,
               py: 1.5,
@@ -233,7 +227,6 @@ export default function HomeScreen() {
               whiteSpace: 'nowrap',
               minWidth: 'auto',
               '&:hover': {
-                backgroundColor: '#1565C0',
                 boxShadow: '0 6px 16px rgba(25, 118, 210, 0.3)'
               }
             }}
@@ -250,12 +243,13 @@ export default function HomeScreen() {
             display: 'flex',
             flexDirection: 'column',
             borderRadius: 2,
-            backgroundColor: '#ffffff',
+            bgcolor: 'background.paper',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)',
-            border: '1px solid rgba(0, 0, 0, 0.05)',
+            border: '1px solid',
+            borderColor: 'divider',
             width: '100%',
             mb: 3,
-            overflow: 'hidden',  // Prevent paper scrolling
+            overflow: 'hidden',
             '&:hover': {
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.1)'
             }
@@ -264,21 +258,22 @@ export default function HomeScreen() {
           <Box 
             sx={{ 
               width: '100%',
-              height: '100%',  // Take full height
-              overflow: 'auto',  // Enable scrolling only for the table container
+              height: '100%',
+              overflow: 'auto',
               '&::-webkit-scrollbar': {
                 width: '8px',
                 height: '8px',
               },
               '&::-webkit-scrollbar-track': {
-                background: '#f1f1f1',
+                bgcolor: 'background.default',
               },
               '&::-webkit-scrollbar-thumb': {
-                background: '#888',
+                bgcolor: 'text.secondary',
                 borderRadius: '4px',
+                opacity: 0.5,
               },
               '&::-webkit-scrollbar-thumb:hover': {
-                background: '#555',
+                bgcolor: 'text.primary',
               }
             }}
           >
