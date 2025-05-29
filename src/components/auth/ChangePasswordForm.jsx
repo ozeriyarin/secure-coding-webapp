@@ -324,21 +324,6 @@ function ChangePasswordForm() {
       >
         Change Password
       </Button>
-
-      <Button
-        onClick={() => navigate('/home-screen')}
-        sx={{
-          color: '#1976D2',
-          textTransform: 'none',
-          fontSize: '0.875rem',
-          '&:hover': {
-            backgroundColor: 'transparent',
-            textDecoration: 'underline'
-          }
-        }}
-      >
-        Back to Home
-      </Button>
     </Box>
   );
 }

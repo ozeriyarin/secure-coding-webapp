@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container, Typography, IconButton, Link } from '@mui/material';
+import { Box, Container, Typography } from '@mui/material';
 
 
 /**
@@ -16,12 +16,13 @@ export default function Footer() {
         bottom: 0,
         left: 0,
         right: 0,
-        bgcolor: '#ffffff',
-        borderTop: '1px solid rgba(0, 0, 0, 0.05)',
+        borderTop: '1px solid',
+        borderColor: 'divider',
         boxShadow: '0 -1px 2px rgba(0, 0, 0, 0.05)',
         zIndex: 1300,
         backdropFilter: 'blur(8px)',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)'
+        bgcolor: 'background.paper',
+        transition: 'background-color 0.3s ease-in-out'
       }}
     >
       <Container 
@@ -44,7 +45,6 @@ export default function Footer() {
         >
           © {new Date().getFullYear()} Secure Coding App
         </Typography>
-        
       </Container>
     </Box>
   );

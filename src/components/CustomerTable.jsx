@@ -20,7 +20,8 @@ import {
   export default function CustomerTable({ customers }) {
     return (
       <Box sx={{ 
-        border: '1px solid rgba(224, 224, 224, 1)',
+        border: '1px solid',
+        borderColor: 'divider',
         borderRadius: 1,
         width: '100%',
         height: '100%',
@@ -33,6 +34,7 @@ import {
             minWidth: '1200px',
             maxWidth: '3000px',
             boxShadow: 'none',
+            bgcolor: 'background.paper',
             '& .MuiTable-root': {
               width: '100%',
               borderCollapse: 'separate',
@@ -40,7 +42,8 @@ import {
             },
             '& .MuiTableCell-root': {
               padding: '16px 24px',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              color: 'text.primary'
             }
           }}
         >
@@ -51,8 +54,8 @@ import {
                   align="center" 
                   sx={{ 
                     fontWeight: 600,
-                    backgroundColor: '#f8f9fa',
-                    color: '#1976D2',
+                    bgcolor: 'background.default',
+                    color: 'primary.main',
                     fontSize: '0.95rem',
                     py: 2
                   }}
@@ -63,8 +66,8 @@ import {
                   align="center" 
                   sx={{ 
                     fontWeight: 600,
-                    backgroundColor: '#f8f9fa',
-                    color: '#1976D2',
+                    bgcolor: 'background.default',
+                    color: 'primary.main',
                     fontSize: '0.95rem',
                     py: 2
                   }}
@@ -75,8 +78,8 @@ import {
                   align="center" 
                   sx={{ 
                     fontWeight: 600,
-                    backgroundColor: '#f8f9fa',
-                    color: '#1976D2',
+                    bgcolor: 'background.default',
+                    color: 'primary.main',
                     fontSize: '0.95rem',
                     py: 2
                   }}
@@ -87,8 +90,8 @@ import {
                   align="center" 
                   sx={{ 
                     fontWeight: 600,
-                    backgroundColor: '#f8f9fa',
-                    color: '#1976D2',
+                    bgcolor: 'background.default',
+                    color: 'primary.main',
                     fontSize: '0.95rem',
                     py: 2
                   }}
@@ -99,8 +102,8 @@ import {
                   align="center" 
                   sx={{ 
                     fontWeight: 600,
-                    backgroundColor: '#f8f9fa',
-                    color: '#1976D2',
+                    bgcolor: 'background.default',
+                    color: 'primary.main',
                     fontSize: '0.95rem',
                     py: 2
                   }}
@@ -111,8 +114,8 @@ import {
                   align="center" 
                   sx={{ 
                     fontWeight: 600,
-                    backgroundColor: '#f8f9fa',
-                    color: '#1976D2',
+                    bgcolor: 'background.default',
+                    color: 'primary.main',
                     fontSize: '0.95rem',
                     py: 2
                   }}
@@ -123,8 +126,8 @@ import {
                   align="center" 
                   sx={{ 
                     fontWeight: 600,
-                    backgroundColor: '#f8f9fa',
-                    color: '#1976D2',
+                    bgcolor: 'background.default',
+                    color: 'primary.main',
                     fontSize: '0.95rem',
                     py: 2
                   }}
@@ -154,7 +157,7 @@ import {
                     key={customer.id}
                     sx={{
                       '&:hover': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                        bgcolor: 'action.hover'
                       }
                     }}
                   >
