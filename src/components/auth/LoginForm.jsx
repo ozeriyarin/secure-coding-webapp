@@ -56,8 +56,17 @@ function LoginForm() {
       });
 
       if (!res.ok) {
-        /* always show the same error to prevent user enumeration */
-        setStatusMsg(GENERIC_ERROR);
+        if (res.status === 401) {
+          /* always show the same error to prevent user enumeration */
+          setStatusMsg(GENERIC_ERROR);
+        } else if (res.status === 403) {
+          /* 403 Forbidden: account locked or similar */
+          setStatusMsg('Your account is locked. Please contact support.');
+        }
+        else {
+          /* other errors (500, etc.) */
+          setStatusMsg('Something went wrong. Please try again later.');
+        }
         return;
       }
 

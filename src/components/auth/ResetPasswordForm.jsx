@@ -1,4 +1,9 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import {
+  usePasswordPolicy,
+  validatePassword,
+  PasswordCriteria
+} from '../../utils/passwordPolicy';
 import {
   TextField,
   Button,
@@ -17,13 +22,7 @@ import {
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-/* ---------- constants ---------- */
-const passwordChecks = (pwd) => ({
-  length:  pwd.length >= 10,
-  mixCase: /(?=.*[a-z])(?=.*[A-Z])/.test(pwd),
-  numbers: /(?=.*\d)/.test(pwd),
-  special: /[^A-Za-z0-9]/.test(pwd)
-});
+
 
 const INPUT_SX = {
   '& .MuiOutlinedInput-root': {
@@ -33,18 +32,6 @@ const INPUT_SX = {
     '&.Mui-focused': { backgroundColor: 'rgba(255, 255, 255, 0.09)' }
   }
 };
-
-/* ---------- reusable UI ---------- */
-const Criterion = ({ ok, label }) => (
-  <Typography
-    variant="body2"
-    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-    color={ok ? 'success.main' : 'text.secondary'}
-  >
-    {ok ? <CheckCircle fontSize="small" /> : <Cancel fontSize="small" />}
-    {label}
-  </Typography>
-);
 
 /* ---------- component ---------- */
 function ChangePasswordForm() {
@@ -67,7 +54,8 @@ function ChangePasswordForm() {
   const navigate  = useNavigate();
 
   /* ---------- derived ---------- */
-  const pc = useMemo(() => passwordChecks(values.newPassword), [values.newPassword]);
+  const policy        = usePasswordPolicy();
+  const { ok: pwdOK } = validatePassword(values.newPassword, policy);
 
   const isFormValid = useMemo(
     () =>
@@ -75,7 +63,7 @@ function ChangePasswordForm() {
       values.newPassword &&
       values.confirmPassword &&
       Object.values(errors).every((e) => !e) &&
-      pc.length && pc.mixCase && pc.numbers && pc.special,
+      pwdOK,
     [values, errors, pc]
   );
 
@@ -246,12 +234,7 @@ function ChangePasswordForm() {
         />
 
         {/* live criteria */}
-        <Box sx={{ pl: 1 }}>
-          <Criterion ok={pc.length}   label="At least 10 characters" />
-          <Criterion ok={pc.mixCase}  label="Upper & lower-case letters" />
-          <Criterion ok={pc.numbers}  label="At least one number" />
-          <Criterion ok={pc.special}  label="At least one special character" />
-        </Box>
+        <PasswordCriteria pwd={values.newPassword} policy={policy} />
 
         {/* submit */}
         <Button

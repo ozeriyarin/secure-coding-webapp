@@ -1,7 +1,5 @@
 import {useEffect, useState} from "react";
-import { v4 as uuidv4 } from 'uuid';
 import PropTypes from "prop-types";
-import { useLocation,useNavigate } from "react-router-dom";
 
 import {
   Box,
@@ -11,7 +9,6 @@ import {
   DialogActions,
   Paper,
   Container,
-  Divider,
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AddIcon from '@mui/icons-material/Add';
@@ -88,10 +85,6 @@ SuccessDialog.propTypes = {
 export default function HomeScreen() {
   const [customers, setCustomers] = useState([]);
   const [isModelOpen, setIsModelOpen] = useState(false);
-  
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { userId } = location.state || {};
 
   // Fetch customers when component mounts
   useEffect(() => {
@@ -117,8 +110,9 @@ export default function HomeScreen() {
     fetchCustomers();
   }, []);
 
-  const openAddModal = () => {
-    setIsModelOpen(true);
+  const openAddModal = (e) => {
+    e.currentTarget.blur(); 
+    setIsModelOpen(true);   
   };
 
   const closeModal = () => {
@@ -158,14 +152,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Navigation handlers
-  const handleLogout = () => {
-    navigate('/');
-  };
-
-  const handleChangePassword = () => {
-    navigate('/change-password', { state: { userId } });
-  };
 
   return (
     <Box sx={{ 

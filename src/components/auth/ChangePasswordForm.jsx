@@ -1,27 +1,9 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { usePasswordPolicy, validatePassword, PasswordCriteria } from '../../utils/passwordPolicy';
 import { TextField, Button, Typography, Box, IconButton, InputAdornment, Alert, Stack } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Visibility, VisibilityOff, CheckCircle, Cancel } from '@mui/icons-material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
-/* ---------- constants ---------- */
-const passwordChecks = (pwd) => ({
-  length: pwd.length >= 10,
-  mixCase: /(?=.*[a-z])(?=.*[A-Z])/.test(pwd),
-  numbers: /(?=.*\d)/.test(pwd),
-  special: /[^A-Za-z0-9]/.test(pwd)
-});
-
-/* ---------- reusable UI ---------- */
-const Criterion = ({ ok, label }) => (
-  <Typography
-    variant="body2"
-    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-    color={ok ? 'success.main' : 'text.secondary'}
-  >
-    {ok ? <CheckCircle fontSize="small" /> : <Cancel fontSize="small" />}
-    {label}
-  </Typography>
-);
 
 function ChangePasswordForm() {
   const [oldPassword, setOldPassword] = useState('');
@@ -33,6 +15,9 @@ function ChangePasswordForm() {
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState({});
   
+  const policy = usePasswordPolicy();
+  const { ok: pwdOK } = validatePassword(newPassword, policy);
+
   const location = useLocation();
   const { userId } = location.state || {};
   const navigate = useNavigate();
@@ -41,22 +26,21 @@ function ChangePasswordForm() {
   const handleClickShowConfirmNewPassword = () => setShowConfirmNewPassword((show) => !show);
   const handleClickShowOldPassword = () => setShowOldPassword((show) => !show);
 
+
   const validate = useCallback(
     (field, val) => {
       switch (field) {
-        case 'newPassword': {
-          const pc = passwordChecks(val);
-          return pc.length && pc.mixCase && pc.special && pc.numbers
+        case 'newPassword':
+          return validatePassword(val, policy).ok
             ? ''
-            : 'Password must be at least 10 characters and include upper & lower-case letters, numbers, and special characters';
-        }
+            : 'Password does not meet policy requirements';
         case 'confirmNewPassword':
-          return val === newPassword ? '' : 'passwords mismatch';
+          return val === newPassword ? '' : 'Passwords mismatch';
         default:
           return '';
       }
     },
-    [newPassword]
+    [newPassword, policy]
   );
 
   const handlePasswordChange = useCallback(
@@ -82,20 +66,23 @@ function ChangePasswordForm() {
     [validate, confirmNewPassword]
   );
 
-  const isFormValid = () => {
-    return oldPassword && newPassword && confirmNewPassword && 
-           Object.values(errors).every((e) => !e) &&
-           passwordChecks(newPassword).length && 
-           passwordChecks(newPassword).mixCase && 
-           passwordChecks(newPassword).special && 
-           passwordChecks(newPassword).numbers;
-  };
+  const isFormValid = () =>
+    oldPassword &&
+    newPassword &&
+    confirmNewPassword &&
+    newPassword === confirmNewPassword &&
+    pwdOK;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!isFormValid()) {
       setMessage('Please fill all fields correctly and ensure password meets all requirements.');
+      return;
+    }
+
+    if (oldPassword === newPassword) {
+      setMessage('New password cannot be the same as the old password.');
       return;
     }
 
@@ -117,7 +104,11 @@ function ChangePasswordForm() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        setMessage(errorData.message || 'Password change failed. Please try again.');
+        if (response.status === 400) {
+          setMessage(errorData.message || 'Password change failed. Please try again.');
+        } else if (response.status === 401) {
+          setMessage('Password used before. Please choose a different password.');
+        }
         return;
       }
       setMessage('Password changed successfully!');
@@ -131,8 +122,6 @@ function ChangePasswordForm() {
       setMessage('An error occurred. Please try again later.');
     }
   };
-
-  const pc = useMemo(() => passwordChecks(newPassword), [newPassword]);
 
   return (
     <Box
@@ -295,12 +284,7 @@ function ChangePasswordForm() {
       />
 
       {/* live password criteria */}
-      <Box sx={{ pl: 1 }}>
-        <Criterion ok={pc.length} label="At least 10 characters" />
-        <Criterion ok={pc.mixCase} label="Upper & lower-case letters" />
-        <Criterion ok={pc.numbers} label="At least one number" />
-        <Criterion ok={pc.special} label="At least one special character" />
-      </Box>
+      <PasswordCriteria pwd={newPassword} policy={policy} />
 
       <Button
         type="submit"

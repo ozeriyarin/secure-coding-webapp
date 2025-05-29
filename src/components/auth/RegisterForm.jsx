@@ -1,4 +1,9 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import {
+  usePasswordPolicy,
+  validatePassword,
+  PasswordCriteria
+} from '../../utils/passwordPolicy';
 import {
   TextField,
   Button,
@@ -14,25 +19,6 @@ import { Visibility, VisibilityOff, CheckCircle, Cancel } from '@mui/icons-mater
 /* ---------- constants ---------- */
 const NAME_REGEX = /^[a-zA-Z\u0590-\u05FF]+$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const passwordChecks = (pwd) => ({
-  length: pwd.length >= 10,
-  mixCase: /(?=.*[a-z])(?=.*[A-Z])/.test(pwd),
-  numbers: /(?=.*\d)/.test(pwd),
-  special: /[^A-Za-z0-9]/.test(pwd)
-});
-
-/* ---------- reusable UI ---------- */
-const Criterion = ({ ok, label }) => (
-  <Typography
-    variant="body2"
-    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-    color={ok ? 'success.main' : 'text.secondary'}
-  >
-    {ok ? <CheckCircle fontSize="small" /> : <Cancel fontSize="small" />}
-    {label}
-  </Typography>
-);
 
 function RegisterForm({ setTab }) {
   /* ---------- state ---------- */
@@ -57,12 +43,8 @@ function RegisterForm({ setTab }) {
           return NAME_REGEX.test(val) ? '' : 'letters only';
         case 'email':
           return EMAIL_REGEX.test(val) ? '' : 'invalid email';
-        case 'password': {
-          const pc = passwordChecks(val);
-          return pc.length && pc.mixCase && pc.special && pc.numbers
-            ? ''
-            : 'Password must be at least 10 characters and include upper & lower-case letters, numbers, and special characters';
-        }
+        case 'password':
+          return validatePassword(val, policy).ok ? '' : 'Password does not meet policy';
         case 'confirmPassword':
           return val === values.password ? '' : 'passwords mismatch';
         default:
@@ -94,7 +76,9 @@ function RegisterForm({ setTab }) {
     setShowPwd((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const isFormValid = () =>
-    Object.values(values).every(Boolean) && Object.values(errors).every((e) => !e);
+    Object.values(values).every(Boolean) &&
+    Object.values(errors).every(e => !e) &&
+    pwdOK;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -135,8 +119,8 @@ function RegisterForm({ setTab }) {
     }
   };
 
-  /* ---------- derived data ---------- */
-  const pc = useMemo(() => passwordChecks(values.password), [values.password]);
+  const policy        = usePasswordPolicy();
+  const { ok: pwdOK } = validatePassword(values.password, policy);
 
   /* ---------- render ---------- */
   return (
@@ -224,12 +208,7 @@ function RegisterForm({ setTab }) {
         />
 
         {/* live password criteria */}
-        <Box sx={{ pl: 1 }}>
-          <Criterion ok={pc.length} label="At least 10 characters" />
-          <Criterion ok={pc.mixCase} label="Upper & lower-case letters" />
-          <Criterion ok={pc.numbers} label="At least one number" />
-          <Criterion ok={pc.special} label="At least one special character" />
-        </Box>
+        <PasswordCriteria pwd={values.password} policy={policy} />
 
         {/* submit */}
         <Button

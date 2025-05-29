@@ -13,16 +13,11 @@ import {
   Box,
   Typography
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import EditIcon from '@mui/icons-material/Edit';
+
 
 // date pickers
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+
 
 /**
  * Main component of the Add/Edit customers view.
@@ -181,6 +176,7 @@ export default function CustomerFormModal({
       >
         <Typography 
           variant="h5" 
+          component="span"
           sx={{ 
             fontWeight: 600,
             color: 'primary.main',
