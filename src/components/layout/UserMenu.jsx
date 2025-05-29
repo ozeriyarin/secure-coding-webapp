@@ -34,6 +34,8 @@ export default function UserMenu({ userId }) {
 
   const handleLogout = () => {
     handleCloseMenu();
+    // Clear authentication data
+    localStorage.removeItem('userId');
     navigate('/');
   };
 
@@ -42,45 +44,48 @@ export default function UserMenu({ userId }) {
       <Tooltip title="Account settings">
         <IconButton
           onClick={handleOpenMenu}
-          sx={{
-            p: 0,
-            '&:hover': {
-              backgroundColor: 'rgba(25, 118, 210, 0.04)'
-            }
-          }}
+          size="small"
+          sx={{ ml: 2 }}
+          aria-controls={Boolean(anchorEl) ? 'account-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={Boolean(anchorEl) ? 'true' : undefined}
         >
-          <Avatar
-            sx={{
-              width: 40,
-              height: 40,
-              backgroundColor: '#1976D2',
-              fontSize: '1.1rem',
-              fontWeight: 500,
-              '&:hover': {
-                backgroundColor: '#1565C0'
-              }
-            }}
-          >
+          <Avatar sx={{ width: 32, height: 32, bgcolor: '#1976D2' }}>
             <PersonIcon />
           </Avatar>
         </IconButton>
       </Tooltip>
-
       <Menu
         anchorEl={anchorEl}
+        id="account-menu"
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
         onClick={handleCloseMenu}
         PaperProps={{
+          elevation: 0,
           sx: {
-            minWidth: 200,
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
             mt: 1.5,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-            '& .MuiMenuItem-root': {
-              py: 1.5,
-              px: 2.5
-            }
-          }
+            '& .MuiAvatar-root': {
+              width: 32,
+              height: 32,
+              ml: -0.5,
+              mr: 1,
+            },
+            '&:before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: 'background.paper',
+              transform: 'translateY(-50%) rotate(45deg)',
+              zIndex: 0,
+            },
+          },
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}

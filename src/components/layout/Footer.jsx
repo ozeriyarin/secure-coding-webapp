@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Container, Typography, IconButton, Link } from '@mui/material';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
+
 
 /**
  * @description
@@ -45,41 +44,7 @@ export default function Footer() {
         >
           © {new Date().getFullYear()} Secure Coding App
         </Typography>
-
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            size="small"
-            sx={{ 
-              color: 'text.secondary',
-              opacity: 0.7,
-              '&:hover': {
-                opacity: 1,
-                color: '#1976D2'
-              }
-            }}
-          >
-            <GitHubIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-          <IconButton
-            href="https://linkedin.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            size="small"
-            sx={{ 
-              color: 'text.secondary',
-              opacity: 0.7,
-              '&:hover': {
-                opacity: 1,
-                color: '#1976D2'
-              }
-            }}
-          >
-            <LinkedInIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Box>
+        
       </Container>
     </Box>
   );

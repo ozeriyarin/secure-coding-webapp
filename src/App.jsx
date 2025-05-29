@@ -1,6 +1,6 @@
 import React from 'react';
 import { Paper, Tabs, Tab, Box } from '@mui/material';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Components
 import Navbar from './components/layout/Navbar';
@@ -11,6 +11,7 @@ import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/auth/ResetPasswordForm'; 
 import ChangePasswordForm from './components/auth/ChangePasswordForm';
 import HomeScreen from './components/HomeScreen';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
   const [tab, setTab] = React.useState(0);
@@ -34,19 +35,22 @@ function App() {
     }
   };
 
+  // Check if user is authenticated
+  const isAuthenticated = () => {
+    return !!localStorage.getItem('userId');
+  };
+
   return (
     <Router>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Navbar />
         <Box sx={{ pt: '64px', flex: 1, pb: { xs: '40px', sm: '48px' } }}>
           <Routes>
+            {/* Public Routes */}
             <Route
               path="/"
               element={
-                <Paper 
-                  elevation={0} 
-                  sx={paperStyles}
-                >
+                <Paper elevation={0} sx={paperStyles}>
                   <Tabs 
                     value={tab} 
                     onChange={handleChange} 
@@ -84,30 +88,49 @@ function App() {
               }
             />
 
-            <Route path="/home-screen" element={<HomeScreen />} />
-
-            {/* Auth Routes */}
-            {[
-              { path: '/forgot-password', Component: ForgotPasswordForm },
-              { path: '/reset-password', Component: ResetPasswordForm },
-              { path: '/change-password', Component: ChangePasswordForm }
-            ].map(({ path, Component }) => (
-              <Route
-                key={path}
-                path={path}
-                element={
-                  <Paper 
-                    elevation={0}
-                    sx={{ 
-                      ...paperStyles,
-                      p: 4,
-                    }}
-                  >
-                    <Component />
+            {/* Public Auth Routes - Only accessible when not authenticated */}
+            <Route
+              path="/forgot-password"
+              element={
+                isAuthenticated() ? (
+                  <Navigate to="/home-screen" replace />
+                ) : (
+                  <Paper elevation={0} sx={{ ...paperStyles, p: 4 }}>
+                    <ForgotPasswordForm />
                   </Paper>
-                }
-              />
-            ))}
+                )
+              }
+            />
+
+            {/* Protected Routes */}
+            <Route 
+              path="/home-screen" 
+              element={
+                <ProtectedRoute>
+                  <HomeScreen />
+                </ProtectedRoute>
+              } 
+            />
+            <Route
+              path="/change-password"
+              element={
+                <ProtectedRoute>
+                  <Paper elevation={0} sx={{ ...paperStyles, p: 4 }}>
+                    <ChangePasswordForm />
+                  </Paper>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <ProtectedRoute>
+                  <Paper elevation={0} sx={{ ...paperStyles, p: 4 }}>
+                    <ResetPasswordForm />
+                  </Paper>
+                </ProtectedRoute>
+              }
+            />
 
             {/* 404 */}
             <Route

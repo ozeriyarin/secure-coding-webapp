@@ -11,7 +11,7 @@ import {
   Stack
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 /**
  * LoginForm component
@@ -24,6 +24,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   /* ---------- constants ---------- */
   const GENERIC_ERROR = 'Invalid username or password. Please try again.';
@@ -64,7 +65,13 @@ function LoginForm() {
       setStatusMsg('Login successful!');
       setEmail('');
       setPassword('');
-      navigate('/home-screen', { state: { userId: json.user.user_id } });
+      
+      // Store userId in localStorage for persistence
+      localStorage.setItem('userId', json.user.user_id);
+      
+      // Redirect to the attempted URL or home screen
+      const from = location.state?.from?.pathname || '/home-screen';
+      navigate(from, { state: { userId: json.user.user_id } });
     } catch {
       /* network / unexpected error */
       setStatusMsg('Something went wrong. Please try again later.');
