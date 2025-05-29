@@ -104,9 +104,9 @@ function ChangePasswordForm() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        if (response.status === 400) {
+        if (response.status === 500) {
           setMessage(errorData.message || 'Password change failed. Please try again.');
-        } else if (response.status === 401) {
+        } else if (response.status === 400) {
           setMessage('Password used before. Please choose a different password.');
         }
         return;
