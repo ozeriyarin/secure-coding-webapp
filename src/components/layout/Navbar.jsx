@@ -35,10 +35,11 @@ export default function Navbar() {
 
   const currentPath         = location.pathname;
   const shouldShowUserMenu  = currentPath !== '/';
+  const isResetPassword     = currentPath === '/reset-password';
 
   /* ---------- handlers ---------- */
   const handleLogoClick = () => {
-    if (shouldShowUserMenu && userId) {
+    if (shouldShowUserMenu && userId && !isResetPassword) {
       navigate('/home-screen', { state: { userId } });
     }
   };
@@ -68,7 +69,8 @@ export default function Navbar() {
               alignItems: 'center',
               gap: 1,
               flexGrow: 1,
-              cursor: shouldShowUserMenu ? 'pointer' : 'default'
+              cursor: shouldShowUserMenu && !isResetPassword ? 'pointer' : 'default',
+              pointerEvents: isResetPassword ? 'none' : 'auto'
             }}
             onClick={handleLogoClick}
           >
@@ -94,7 +96,7 @@ export default function Navbar() {
           </Box>
 
           {/* user menu */}
-          {shouldShowUserMenu && userId && <UserMenu userId={userId} />}
+          {shouldShowUserMenu && userId && !isResetPassword && <UserMenu userId={userId} />}
         </Toolbar>
       </Container>
     </AppBar>

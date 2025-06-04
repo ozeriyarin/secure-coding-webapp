@@ -34,233 +34,265 @@ const INPUT_SX = {
 };
 
 /* ---------- component ---------- */
-function ChangePasswordForm() {
+function ResetPasswordForm() {
   /* ---------- state ---------- */
-  const [values, setValues] = useState({
-    oldPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [showPwd, setShowPwd] = useState({
-    old: false,
-    new: false,
-    confirm: false
-  });
-  const [errors, setErrors]   = useState({});
-  const [statusMsg, setStatusMsg] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [message, setMessage] = useState('');
+  const [errors, setErrors] = useState({});
+  
+  const policy = usePasswordPolicy();
+  const { ok: pwdOK } = validatePassword(newPassword, policy);
 
-  const { state } = useLocation();
-  const { userId } = state || {};
-  const navigate  = useNavigate();
+  const location = useLocation();
+  const { userId } = location.state || {};
+  const navigate = useNavigate();
 
   /* ---------- derived ---------- */
-  const policy        = usePasswordPolicy();
-  const { ok: pwdOK } = validatePassword(values.newPassword, policy);
-
-  const isFormValid = useMemo(
-    () =>
-      values.oldPassword &&
-      values.newPassword &&
-      values.confirmPassword &&
-      Object.values(errors).every((e) => !e) &&
-      pwdOK,
-    [values, errors, pc]
-  );
+  const isFormValid = () =>
+    newPassword &&
+    confirmPassword &&
+    newPassword === confirmPassword &&
+    pwdOK;
 
   /* ---------- helpers ---------- */
-  const toggleVis = useCallback(
-    (key) => () => setShowPwd((prev) => ({ ...prev, [key]: !prev[key] })),
-    []
-  );
+  const handleClickShowNewPassword = () => setShowNewPassword((show) => !show);
+  const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
 
   const validate = useCallback(
     (field, val) => {
       switch (field) {
-        case 'oldPassword':
-          return val.trim() ? '' : 'required';
         case 'newPassword':
-          return pc.length && pc.mixCase && pc.numbers && pc.special
+          return validatePassword(val, policy).ok
             ? ''
-            : 'Password must meet all criteria below';
+            : 'Password does not meet policy requirements';
         case 'confirmPassword':
-          return val === values.newPassword ? '' : 'passwords mismatch';
+          return val === newPassword ? '' : 'Passwords mismatch';
         default:
           return '';
       }
     },
-    [pc, values.newPassword]
+    [newPassword, policy]
   );
 
-  const handleChange = (field) => (e) => {
-    const val = e.target.value;
-    setValues((prev) => ({ ...prev, [field]: val }));
-
-    setErrors((prev) => ({
-      ...prev,
-      [field]: validate(field, val),
-      ...(field === 'newPassword' && {
-        confirmPassword: validate('confirmPassword', values.confirmPassword)
-      })
-    }));
-  };
+  const handlePasswordChange = useCallback(
+    (field) => (e) => {
+      const val = e.target.value;
+      if (field === 'newPassword') {
+        setNewPassword(val);
+        setErrors((prev) => ({ 
+          ...prev, 
+          newPassword: validate('newPassword', val),
+          confirmPassword: validate('confirmPassword', confirmPassword)
+        }));
+      } else {
+        setConfirmPassword(val);
+        setErrors((prev) => ({ 
+          ...prev, 
+          confirmPassword: validate('confirmPassword', val)
+        }));
+      }
+    },
+    [validate, confirmPassword]
+  );
 
   /* ---------- submit ---------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isFormValid) {
-      setStatusMsg('Please fix the errors before submitting.');
+    if (!isFormValid()) {
+      setMessage('Please fill all fields correctly and ensure password meets all requirements.');
       return;
     }
+
     if (!userId) {
-      setStatusMsg('User ID missing — please log in again.');
+      setMessage('User ID missing — please try again.');
       return;
     }
 
     try {
-      const res = await fetch('/api/passwords/change', {
+      const response = await fetch('/api/passwords/reset', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           user_id: userId,
-          password: values.oldPassword,
-          new_password: values.newPassword
-        })
+          new_password: newPassword
+        }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        setStatusMsg(err.message || 'Password change failed.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        setMessage(errorData.message || 'Password reset failed. Please try again.');
         return;
       }
 
-      setStatusMsg('Password changed successfully!');
-      setValues({ oldPassword: '', newPassword: '', confirmPassword: '' });
-      setErrors({});
-      navigate('/');
-    } catch {
-      setStatusMsg('Network error. Try again later.');
+      setMessage('Password reset successfully!');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      // Mark password reset as completed
+      localStorage.setItem('passwordResetCompleted', 'true');
+      
+      // Navigate to login page after a short delay
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+    } catch (error) {
+      console.error('Error during password reset:', error);
+      setMessage('An error occurred. Please try again later.');
     }
   };
 
   /* ---------- render ---------- */
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-      <Stack spacing={2}>
-        <Typography variant="h4" textAlign="center" fontWeight={600} color="primary.main">
-          Change Password
-        </Typography>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+      }}
+    >
+      <Typography 
+        variant="h4" 
+        sx={{ 
+          textAlign: 'center',
+          color: '#1976D2',
+          fontSize: { xs: '1.75rem', sm: '2rem' },
+          fontWeight: 600,
+          mb: 1,
+          letterSpacing: '-0.5px'
+        }}
+      >
+        Reset Password
+      </Typography>
 
-        <Typography variant="body1" textAlign="center" color="text.secondary">
-          Enter your old and new password below
-        </Typography>
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          textAlign: 'center',
+          color: 'text.secondary',
+          mb: 0.5
+        }}
+      >
+        Enter your new password below
+      </Typography>
 
-        {statusMsg && (
-          <Alert
-            severity={statusMsg.includes('successfully') ? 'success' : 'error'}
-            sx={{ borderRadius: 1 }}
-          >
-            {statusMsg}
-          </Alert>
-        )}
-
-        {/* old password */}
-        <TextField
-          label="Old Password"
-          type={showPwd.old ? 'text' : 'password'}
-          value={values.oldPassword}
-          onChange={handleChange('oldPassword')}
-          error={!!errors.oldPassword}
-          helperText={errors.oldPassword}
-          autoComplete="current-password"
-          required
-          fullWidth
-          sx={INPUT_SX}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={toggleVis('old')} edge="end">
-                  {showPwd.old ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-
-        {/* new password */}
-        <TextField
-          label="New Password"
-          type={showPwd.new ? 'text' : 'password'}
-          value={values.newPassword}
-          onChange={handleChange('newPassword')}
-          error={!!errors.newPassword}
-          helperText={errors.newPassword}
-          autoComplete="new-password"
-          required
-          fullWidth
-          sx={INPUT_SX}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={toggleVis('new')} edge="end">
-                  {showPwd.new ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-
-        {/* confirm password */}
-        <TextField
-          label="Confirm New Password"
-          type={showPwd.confirm ? 'text' : 'password'}
-          value={values.confirmPassword}
-          onChange={handleChange('confirmPassword')}
-          error={!!errors.confirmPassword}
-          helperText={errors.confirmPassword}
-          autoComplete="new-password"
-          required
-          fullWidth
-          sx={INPUT_SX}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={toggleVis('confirm')} edge="end">
-                  {showPwd.confirm ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-
-        {/* live criteria */}
-        <PasswordCriteria pwd={values.newPassword} policy={policy} />
-
-        {/* submit */}
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={!isFormValid}
-          sx={{ py: 1.5, textTransform: 'none', fontSize: '1rem', fontWeight: 500 }}
-          fullWidth
-        >
-          Change Password
-        </Button>
-
-        <Button
-          onClick={() => navigate('/home-screen')}
-          sx={{
-            color: 'primary.main',
-            textTransform: 'none',
-            fontSize: '0.875rem',
-            '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' }
+      {message && (
+        <Alert 
+          severity={message.includes('successful') ? 'success' : 'error'}
+          sx={{ 
+            width: '100%',
+            borderRadius: 1,
+            '& .MuiAlert-message': {
+              width: '100%'
+            }
           }}
         >
-          Back to Home
-        </Button>
-      </Stack>
+          {message}
+        </Alert>
+      )}
+
+      <TextField
+        label="New Password"
+        type={showNewPassword ? 'text' : 'password'}
+        value={newPassword}
+        onChange={handlePasswordChange('newPassword')}
+        error={!!errors.newPassword}
+        helperText={errors.newPassword}
+        autoComplete="new-password"
+        required
+        fullWidth
+        sx={INPUT_SX}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={handleClickShowNewPassword}
+                edge="end"
+              >
+                {showNewPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      <TextField
+        label="Confirm New Password"
+        type={showConfirmPassword ? 'text' : 'password'}
+        value={confirmPassword}
+        onChange={handlePasswordChange('confirmPassword')}
+        error={!!errors.confirmPassword}
+        helperText={errors.confirmPassword}
+        autoComplete="new-password"
+        required
+        fullWidth
+        sx={INPUT_SX}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={handleClickShowConfirmPassword}
+                edge="end"
+              >
+                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      {/* live password criteria */}
+      <PasswordCriteria pwd={newPassword} policy={policy} />
+
+      <Button
+        type="submit"
+        variant="contained"
+        disabled={!isFormValid()}
+        fullWidth
+        sx={{
+          mt: 2,
+          py: 1.5,
+          backgroundColor: '#1976D2',
+          borderRadius: 1,
+          textTransform: 'none',
+          fontSize: '1rem',
+          fontWeight: 500,
+          boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+          '&:hover': {
+            backgroundColor: '#1565C0',
+            boxShadow: '0 6px 16px rgba(25, 118, 210, 0.3)'
+          }
+        }}
+      >
+        Reset Password
+      </Button>
+
+      <Button
+        onClick={() => navigate('/')}
+        sx={{
+          color: '#1976D2',
+          textTransform: 'none',
+          fontSize: '0.875rem',
+          '&:hover': {
+            backgroundColor: 'transparent',
+            textDecoration: 'underline'
+          }
+        }}
+      >
+        Back to Login
+      </Button>
     </Box>
   );
 }
 
-export default ChangePasswordForm;
+export default ResetPasswordForm;
