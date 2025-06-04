@@ -38,7 +38,6 @@ export default function CustomerFormModal({
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    age: '',
     phone: '',
     email: '',
     date: ''
@@ -79,7 +78,6 @@ export default function CustomerFormModal({
       setFormData({
         first_name: '',
         last_name: '',
-        age: '',
         phone: '',
         email: '',
         date: ''
@@ -238,15 +236,6 @@ export default function CustomerFormModal({
             sx={{ gridColumn: { xs: '1', sm: '2' } }}
           />
           <TextField
-            label="Age"
-            type="number"
-            value={formData.age}
-            onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-            required
-            fullWidth
-            sx={{ gridColumn: { xs: '1', sm: '1' } }}
-          />
-          <TextField
             label="Phone"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -254,7 +243,7 @@ export default function CustomerFormModal({
             helperText={invalidFields.phone ? 'Phone number is required' : ''}
             required
             fullWidth
-            sx={{ gridColumn: { xs: '1', sm: '2' } }}
+            sx={{ gridColumn: { xs: '1', sm: '1' } }}
           />
           <TextField
             label="Email"
@@ -265,10 +254,10 @@ export default function CustomerFormModal({
             helperText={invalidFields.email ? 'Valid email is required' : ''}
             required
             fullWidth
-            sx={{ gridColumn: { xs: '1', sm: '1/3' } }}
+            sx={{ gridColumn: { xs: '1', sm: '2' } }}
           />
           <TextField
-            label="Date"
+            label="Date of Birth"
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
@@ -277,7 +266,7 @@ export default function CustomerFormModal({
             required
             fullWidth
             InputLabelProps={{ shrink: true }}
-            sx={{ gridColumn: { xs: '1', sm: '1/3' } }}
+            sx={{ gridColumn: { xs: '1', sm: '1 / 3' } }}
           />
         </Box>
       </DialogContent>
