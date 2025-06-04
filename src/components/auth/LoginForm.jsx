@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   TextField,
   Button,
@@ -23,11 +23,31 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockoutTime, setLockoutTime] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
   /* ---------- constants ---------- */
   const GENERIC_ERROR = 'Invalid username or password. Please try again.';
+  const MAX_LOGIN_ATTEMPTS = 5;
+  const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+
+  useEffect(() => {
+    // Check for existing lockout
+    const storedLockout = localStorage.getItem('loginLockout');
+    if (storedLockout) {
+      const lockoutEnd = parseInt(storedLockout);
+      if (Date.now() < lockoutEnd) {
+        setIsLocked(true);
+        setLockoutTime(lockoutEnd);
+      } else {
+        localStorage.removeItem('loginLockout');
+        localStorage.removeItem('loginAttempts');
+      }
+    }
+  }, []);
 
   /* ---------- helpers ---------- */
   const handleClickShowPassword = () =>
@@ -35,6 +55,12 @@ function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isLocked) {
+      const remainingTime = Math.ceil((lockoutTime - Date.now()) / 60000);
+      setStatusMsg(`Account is locked. Please try again in ${remainingTime} minutes.`);
+      return;
+    }
 
     /* client-side format check (still uses generic message) */
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,22 +75,39 @@ function LoginForm() {
     };
 
     try {
+      // Get CSRF token from meta tag
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
       const res = await fetch('/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
         body: JSON.stringify(data)
       });
 
       if (!res.ok) {
+        const newAttempts = loginAttempts + 1;
+        setLoginAttempts(newAttempts);
+        localStorage.setItem('loginAttempts', newAttempts.toString());
+
+        if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+          const lockoutEnd = Date.now() + LOCKOUT_DURATION;
+          localStorage.setItem('loginLockout', lockoutEnd.toString());
+          setIsLocked(true);
+          setLockoutTime(lockoutEnd);
+          setStatusMsg(`Too many failed attempts. Account locked for 15 minutes.`);
+          return;
+        }
+
         if (res.status === 401) {
-          /* always show the same error to prevent user enumeration */
           setStatusMsg(GENERIC_ERROR);
         } else if (res.status === 403) {
-          /* 403 Forbidden: account locked or similar */
           setStatusMsg('Your account is locked. Please contact support.');
-        }
-        else {
-          /* other errors (500, etc.) */
+        } else {
           setStatusMsg('Something went wrong. Please try again later.');
         }
         return;
@@ -75,14 +118,18 @@ function LoginForm() {
       setEmail('');
       setPassword('');
       
-      // Store userId in localStorage for persistence
+      // Clear login attempts and lockout
+      localStorage.removeItem('loginAttempts');
+      localStorage.removeItem('loginLockout');
+      
+      // Store userId and last activity in localStorage
       localStorage.setItem('userId', json.user.user_id);
+      localStorage.setItem('lastActivity', Date.now().toString());
       
       // Redirect to the attempted URL or home screen
       const from = location.state?.from?.pathname || '/home-screen';
       navigate(from, { state: { userId: json.user.user_id } });
     } catch {
-      /* network / unexpected error */
       setStatusMsg('Something went wrong. Please try again later.');
     }
   };

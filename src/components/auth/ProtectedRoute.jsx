@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 /**
@@ -11,9 +11,38 @@ import { Navigate, useLocation } from 'react-router-dom';
 function ProtectedRoute({ children }) {
   const location = useLocation();
   const userId = localStorage.getItem('userId');
+  const lastActivity = localStorage.getItem('lastActivity');
+  const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
   const isResetPasswordRoute = location.pathname === '/reset-password';
   const hasVerifiedEmail = location.state?.userId && !userId; // Check if user has verified email but isn't logged in
   const hasCompletedPasswordReset = localStorage.getItem('passwordResetCompleted');
+
+  useEffect(() => {
+    // Check session expiration on mount and every minute
+    const checkSession = () => {
+      if (userId && lastActivity) {
+        if (Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT) {
+          // Clear session data
+          localStorage.removeItem('userId');
+          localStorage.removeItem('lastActivity');
+          localStorage.removeItem('passwordResetCompleted');
+          window.location.href = '/';
+        }
+      }
+    };
+
+    checkSession();
+    const interval = setInterval(checkSession, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [userId, lastActivity]);
+
+  // Update last activity on route change
+  useEffect(() => {
+    if (userId) {
+      localStorage.setItem('lastActivity', Date.now().toString());
+    }
+  }, [location.pathname, userId]);
 
   // If user is authenticated and tries to access reset-password, redirect to home
   if (userId && isResetPasswordRoute) {

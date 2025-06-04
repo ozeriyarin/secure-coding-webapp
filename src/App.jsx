@@ -38,7 +38,22 @@ function App() {
 
   // Check if user is authenticated
   const isAuthenticated = () => {
-    return !!localStorage.getItem('userId');
+    const userId = localStorage.getItem('userId');
+    const lastActivity = localStorage.getItem('lastActivity');
+    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+    if (!userId || !lastActivity) return false;
+
+    // Check if session has expired
+    if (Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT) {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('lastActivity');
+      return false;
+    }
+
+    // Update last activity
+    localStorage.setItem('lastActivity', Date.now().toString());
+    return true;
   };
 
   return (
