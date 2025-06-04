@@ -83,7 +83,7 @@ export default function CustomerFormModal({
         date: ''
       });
     }
-  }, [initialData]);
+  }, [initialData, open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -146,10 +146,21 @@ export default function CustomerFormModal({
     }
   };
 
+  const handleClose = () => {
+    setFormData({
+      first_name: '',
+      last_name: '',
+      phone: '',
+      email: '',
+      date: ''
+    });
+    onClose();
+  };
+
   return (
     <Dialog 
       open={open} 
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="md"
       fullWidth
       PaperProps={{
@@ -281,7 +292,7 @@ export default function CustomerFormModal({
         }}
       >
         <Button 
-          onClick={onClose}
+          onClick={handleClose}
           sx={{
             color: 'text.secondary',
             '&:hover': {
