@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 /**
  * ProtectedRoute component
@@ -10,12 +10,43 @@ import { Navigate, useLocation } from 'react-router-dom';
  */
 function ProtectedRoute({ children }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
   const lastActivity = localStorage.getItem('lastActivity');
   const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
   const isResetPasswordRoute = location.pathname === '/reset-password';
   const hasVerifiedEmail = location.state?.userId && !userId; // Check if user has verified email but isn't logged in
   const hasCompletedPasswordReset = localStorage.getItem('passwordResetCompleted');
+
+  // Prevent back navigation when not authenticated
+  useEffect(() => {
+    if (!userId && !isResetPasswordRoute) {
+      // Force navigation to login page
+      navigate('/', { replace: true });
+      
+      // Handle browser back button
+      const handlePopState = (event) => {
+        if (!userId) {
+          // Force navigation to login page
+          navigate('/', { replace: true });
+          // Push additional history entries to prevent back navigation
+          window.history.pushState(null, '', '/');
+          window.history.pushState(null, '', '/');
+        }
+      };
+
+      // Add event listener for popstate
+      window.addEventListener('popstate', handlePopState);
+      
+      // Push initial history entries
+      window.history.pushState(null, '', '/');
+      window.history.pushState(null, '', '/');
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [userId, isResetPasswordRoute, navigate]);
 
   useEffect(() => {
     // Check session expiration on mount and every minute
@@ -26,7 +57,7 @@ function ProtectedRoute({ children }) {
           localStorage.removeItem('userId');
           localStorage.removeItem('lastActivity');
           localStorage.removeItem('passwordResetCompleted');
-          window.location.href = '/';
+          navigate('/', { replace: true });
         }
       }
     };
@@ -35,7 +66,7 @@ function ProtectedRoute({ children }) {
     const interval = setInterval(checkSession, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, [userId, lastActivity]);
+  }, [userId, lastActivity, navigate]);
 
   // Update last activity on route change
   useEffect(() => {
