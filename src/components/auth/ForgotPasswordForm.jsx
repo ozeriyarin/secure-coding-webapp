@@ -57,7 +57,7 @@ function ForgotPasswordForm() {
     }
 
     try {
-      const response = await fetch('/api/verifications/verify-code', {
+      const response = await fetch('/api/verifications/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,13 +67,24 @@ function ForgotPasswordForm() {
           code: code
         }),
       });
+      
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        setMessage(errorData.message || 'Invalid verification code.');
+        setMessage(responseData.message || 'Invalid verification code.');
         return;
       }
-      navigate('/reset-password', { state: { userId: userId } });
+
+      // Clear any existing messages
+      setMessage('');
+      
+      // Navigate to reset password page
+      navigate('/reset-password', { 
+        state: { userId: userId },
+        replace: true // This will replace the current history entry
+      });
     } catch (error) {
+      console.error('Verification error:', error);
       setMessage('An error occurred. Please try again later.');
     }
   };
