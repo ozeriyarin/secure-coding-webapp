@@ -57,7 +57,7 @@ function ForgotPasswordForm() {
     }
 
     try {
-      const response = await fetch('/api/verifications/verify-code', {
+      const response = await fetch('/api/verifications/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

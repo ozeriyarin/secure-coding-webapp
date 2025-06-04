@@ -1,266 +1,159 @@
-import React, { useState, useCallback } from 'react';
-import {
-  usePasswordPolicy,
-  validatePassword,
-  PasswordCriteria
-} from '../../utils/passwordPolicy';
-import {
-  TextField,
-  Button,
-  Typography,
-  Box,
-  IconButton,
-  InputAdornment,
-  Alert,
-  Stack
-} from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  CheckCircle,
-  Cancel
-} from '@mui/icons-material';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Container, TextField, Button, Typography, Box, IconButton, InputAdornment , Alert } from '@mui/material';
+import { useLocation,useNavigate } from 'react-router-dom';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 
+function ResetPasswordForm() {
 
-const INPUT_SX = {
-  '& .MuiOutlinedInput-root': {
-    borderRadius: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.09)',
-    '&:hover':   { backgroundColor: 'rgba(255, 255, 255, 0.13)' },
-    '&.Mui-focused': { backgroundColor: 'rgba(255, 255, 255, 0.09)' }
-  }
-};
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword , setsShowConfirmNewPassword] = useState(false);
 
-/* ---------- component ---------- */
-function ChangePasswordForm() {
-  /* ---------- state ---------- */
-  const [values, setValues] = useState({
-    oldPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [showPwd, setShowPwd] = useState({
-    old: false,
-    new: false,
-    confirm: false
-  });
-  const [errors, setErrors]   = useState({});
-  const [statusMsg, setStatusMsg] = useState('');
+  const location = useLocation();
+  const { userId } = location.state || {};
 
-  const { state } = useLocation();
-  const { userId } = state || {};
-  const navigate  = useNavigate();
+  const [message, setMessage] = useState('');
 
-  /* ---------- derived ---------- */
-  const policy        = usePasswordPolicy();
-  const { ok: pwdOK } = validatePassword(values.newPassword, policy);
+  const navigate = useNavigate();
 
-  const isFormValid = useMemo(
-    () =>
-      values.oldPassword &&
-      values.newPassword &&
-      values.confirmPassword &&
-      Object.values(errors).every((e) => !e) &&
-      pwdOK,
-    [values, errors, pc]
-  );
 
-  /* ---------- helpers ---------- */
-  const toggleVis = useCallback(
-    (key) => () => setShowPwd((prev) => ({ ...prev, [key]: !prev[key] })),
-    []
-  );
+  const handleClickShowNewPassword = () => setShowNewPassword((show) => !show);
+  const handleClickShowConfirmNewPassword = () => setsShowConfirmNewPassword((show) => !show);
 
-  const validate = useCallback(
-    (field, val) => {
-      switch (field) {
-        case 'oldPassword':
-          return val.trim() ? '' : 'required';
-        case 'newPassword':
-          return pc.length && pc.mixCase && pc.numbers && pc.special
-            ? ''
-            : 'Password must meet all criteria below';
-        case 'confirmPassword':
-          return val === values.newPassword ? '' : 'passwords mismatch';
-        default:
-          return '';
-      }
-    },
-    [pc, values.newPassword]
-  );
-
-  const handleChange = (field) => (e) => {
-    const val = e.target.value;
-    setValues((prev) => ({ ...prev, [field]: val }));
-
-    setErrors((prev) => ({
-      ...prev,
-      [field]: validate(field, val),
-      ...(field === 'newPassword' && {
-        confirmPassword: validate('confirmPassword', values.confirmPassword)
-      })
-    }));
-  };
-
-  /* ---------- submit ---------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isFormValid) {
-      setStatusMsg('Please fix the errors before submitting.');
+    if (newPassword.trim() === '' || confirmNewPassword.trim() === '') {
+      setMessage('Both fields are required.');
       return;
     }
-    if (!userId) {
-      setStatusMsg('User ID missing — please log in again.');
+
+    if (newPassword !== confirmNewPassword) {
+      setMessage('New Password and Confirm New Password do not match.');
       return;
     }
+
+    // If all validations pass, clear any previous messages
+    setMessage('');
+
+    const data = {
+      new_password: newPassword,
+      user_id: userId,
+    };
 
     try {
-      const res = await fetch('/api/passwords/change', {
+      const response = await fetch('/api/passwords/reset', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          password: values.oldPassword,
-          new_password: values.newPassword
-        })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
       });
-
-      if (!res.ok) {
-        const err = await res.json();
-        setStatusMsg(err.message || 'Password change failed.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        setMessage(errorData.message || 'Password reset failed. Please try again.');
+        console.log(data);
         return;
       }
-
-      setStatusMsg('Password changed successfully!');
-      setValues({ oldPassword: '', newPassword: '', confirmPassword: '' });
-      setErrors({});
+      const responseData = await response.json();
+      console.log('Password reset successfully:', responseData);
+      setMessage('Password reset successfully!');
+      setNewPassword('');
+      setConfirmNewPassword('');
       navigate('/');
-    } catch {
-      setStatusMsg('Network error. Try again later.');
+    }
+    catch (error) {
+      console.error('Error during password reset:', error);
+      setMessage('An error occurred. Please try again later.');
     }
   };
 
-  /* ---------- render ---------- */
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-      <Stack spacing={2}>
-        <Typography variant="h4" textAlign="center" fontWeight={600} color="primary.main">
-          Change Password
+    <Container maxWidth="sm">
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{
+          mt: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <Typography variant="h4" align="center">
+          Reset Password
+        </Typography>
+        <Typography variant="body1" align="center">
+          Enter your new password below.
         </Typography>
 
-        <Typography variant="body1" textAlign="center" color="text.secondary">
-          Enter your old and new password below
-        </Typography>
-
-        {statusMsg && (
-          <Alert
-            severity={statusMsg.includes('successfully') ? 'success' : 'error'}
-            sx={{ borderRadius: 1 }}
-          >
-            {statusMsg}
+        {message && (
+          <Alert severity={message.includes('successful') ? 'success' : 'error'}>
+            {message}
           </Alert>
         )}
 
-        {/* old password */}
-        <TextField
-          label="Old Password"
-          type={showPwd.old ? 'text' : 'password'}
-          value={values.oldPassword}
-          onChange={handleChange('oldPassword')}
-          error={!!errors.oldPassword}
-          helperText={errors.oldPassword}
-          autoComplete="current-password"
-          required
-          fullWidth
-          sx={INPUT_SX}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={toggleVis('old')} edge="end">
-                  {showPwd.old ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-
-        {/* new password */}
         <TextField
           label="New Password"
-          type={showPwd.new ? 'text' : 'password'}
-          value={values.newPassword}
-          onChange={handleChange('newPassword')}
-          error={!!errors.newPassword}
-          helperText={errors.newPassword}
-          autoComplete="new-password"
+          variant="outlined"
+          type={showNewPassword ? 'text' : 'password'}
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          autoComplete='new-password'
           required
-          fullWidth
-          sx={INPUT_SX}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={toggleVis('new')} edge="end">
-                  {showPwd.new ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowNewPassword}
+                    edge="end"
+                  >
+                    {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         />
-
-        {/* confirm password */}
         <TextField
           label="Confirm New Password"
-          type={showPwd.confirm ? 'text' : 'password'}
-          value={values.confirmPassword}
-          onChange={handleChange('confirmPassword')}
-          error={!!errors.confirmPassword}
-          helperText={errors.confirmPassword}
-          autoComplete="new-password"
+          variant="outlined"
+          type= {showConfirmNewPassword ? 'text' : 'password'}
+          value={confirmNewPassword}
+          onChange={(e) => setConfirmNewPassword(e.target.value)}
+          autoComplete='new-password'
           required
-          fullWidth
-          sx={INPUT_SX}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={toggleVis('confirm')} edge="end">
-                  {showPwd.confirm ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            )
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowConfirmNewPassword}
+                    edge="end"
+                  >
+                    {showConfirmNewPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         />
 
-        {/* live criteria */}
-        <PasswordCriteria pwd={values.newPassword} policy={policy} />
-
-        {/* submit */}
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={!isFormValid}
-          sx={{ py: 1.5, textTransform: 'none', fontSize: '1rem', fontWeight: 500 }}
-          fullWidth
-        >
-          Change Password
+        <Button type="submit" variant="contained" color="primary">
+          Reset Password
         </Button>
 
-        <Button
-          onClick={() => navigate('/home-screen')}
-          sx={{
-            color: 'primary.main',
-            textTransform: 'none',
-            fontSize: '0.875rem',
-            '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' }
-          }}
-        >
-          Back to Home
+        <Button variant="outlined" color="secondary" onClick={() => navigate('/')}>
+          Cancle
         </Button>
-      </Stack>
-    </Box>
+      </Box>
+    </Container>
   );
 }
 
-export default ChangePasswordForm;
+export default ResetPasswordForm;
