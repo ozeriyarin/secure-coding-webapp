@@ -51,6 +51,8 @@ export default function CustomerFormModal({
     date: false,
   });
 
+  const todayISO = new Date().toISOString().split('T')[0];
+
   const addCustomer = async (customerDetails) => {
     try {
       console.log('Adding customer:', customerDetails);
@@ -277,6 +279,7 @@ export default function CustomerFormModal({
             required
             fullWidth
             InputLabelProps={{ shrink: true }}
+            inputProps={{ max: todayISO }}
             sx={{ gridColumn: { xs: '1', sm: '1 / 3' } }}
           />
         </Box>
