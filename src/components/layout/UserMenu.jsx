@@ -36,10 +36,19 @@ export default function UserMenu({ userId }) {
     navigate('/change-password', { state: { userId } });
   };
 
+  // Clear all session data
+  const clearSessionData = () => {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('lastActivity');
+    localStorage.removeItem('passwordResetCompleted');
+    // Clear any other session-related data
+    sessionStorage.clear();
+  };
+
   const handleLogout = () => {
     handleCloseMenu();
-    // Clear authentication data
-    localStorage.removeItem('userId');
+    // Clear all session data
+    clearSessionData();
     navigate('/');
   };
 
@@ -94,8 +103,6 @@ export default function UserMenu({ userId }) {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        
-
         <MenuItem onClick={handleChangePassword}>
           <ListItemIcon>
             <LockIcon fontSize="small" sx={{ color: 'primary.main' }} />

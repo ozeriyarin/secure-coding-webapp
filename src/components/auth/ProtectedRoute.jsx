@@ -18,27 +18,43 @@ function ProtectedRoute({ children }) {
   const hasVerifiedEmail = location.state?.userId && !userId; // Check if user has verified email but isn't logged in
   const hasCompletedPasswordReset = localStorage.getItem('passwordResetCompleted');
 
+  // Clear all session data
+  const clearSessionData = () => {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('lastActivity');
+    localStorage.removeItem('passwordResetCompleted');
+    // Clear any other session-related data
+    sessionStorage.clear();
+  };
+
   // Prevent back navigation when not authenticated
   useEffect(() => {
     if (!userId && !isResetPasswordRoute) {
+      // Clear all session data
+      clearSessionData();
+      
       // Force navigation to login page
       navigate('/', { replace: true });
       
       // Handle browser back button
       const handlePopState = (event) => {
-        if (!userId) {
-          // Force navigation to login page
-          navigate('/', { replace: true });
-          // Push additional history entries to prevent back navigation
-          window.history.pushState(null, '', '/');
-          window.history.pushState(null, '', '/');
-        }
+        // Clear all session data again
+        clearSessionData();
+        
+        // Force navigation to login page
+        navigate('/', { replace: true });
+        
+        // Push multiple history entries to prevent back navigation
+        window.history.pushState(null, '', '/');
+        window.history.pushState(null, '', '/');
+        window.history.pushState(null, '', '/');
       };
 
       // Add event listener for popstate
       window.addEventListener('popstate', handlePopState);
       
       // Push initial history entries
+      window.history.pushState(null, '', '/');
       window.history.pushState(null, '', '/');
       window.history.pushState(null, '', '/');
 
@@ -53,10 +69,8 @@ function ProtectedRoute({ children }) {
     const checkSession = () => {
       if (userId && lastActivity) {
         if (Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT) {
-          // Clear session data
-          localStorage.removeItem('userId');
-          localStorage.removeItem('lastActivity');
-          localStorage.removeItem('passwordResetCompleted');
+          // Clear all session data
+          clearSessionData();
           navigate('/', { replace: true });
         }
       }
@@ -87,16 +101,16 @@ function ProtectedRoute({ children }) {
 
   // If user is not authenticated and tries to access protected route (except reset-password)
   if (!userId && !isResetPasswordRoute) {
-    // Clear any password reset flags
-    localStorage.removeItem('passwordResetCompleted');
+    // Clear all session data
+    clearSessionData();
     // Redirect to login page but save the attempted URL
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // If user has verified email but hasn't completed password reset, only allow access to reset-password
   if (hasVerifiedEmail && !hasCompletedPasswordReset && !isResetPasswordRoute) {
-    // Clear any password reset flags
-    localStorage.removeItem('passwordResetCompleted');
+    // Clear all session data
+    clearSessionData();
     return <Navigate to="/reset-password" state={{ userId: location.state?.userId }} replace />;
   }
 
