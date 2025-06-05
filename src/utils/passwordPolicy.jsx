@@ -31,7 +31,7 @@ export function validatePassword(pwd, policy) {
   if (policy.dictionaryBlocklist?.some(w =>
         pwd.toLowerCase().includes(w.toLowerCase())))
                                                              errors.blocklist = true;
-
+  console.log('Password validation:', { pwd, errors });
   return { ok: Object.keys(errors).length === 0, errors };
 }
 
