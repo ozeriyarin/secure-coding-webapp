@@ -62,58 +62,85 @@ function App() {
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
           <Navbar />
           <Box sx={{ pt: '64px', flex: 1, pb: { xs: '40px', sm: '48px' } }}>
-            <Routes>
-              {/* Public Routes */}
+            <Routes>              {/* Public Routes */}
               <Route
                 path="/"
                 element={
-                  <Paper elevation={0} sx={paperStyles}>
-                    <Tabs 
-                      value={tab} 
-                      onChange={handleChange} 
-                      variant="fullWidth"
-                      sx={{
-                        borderBottom: '1px solid',
-                        borderColor: 'divider',
-                        '& .MuiTab-root': {
-                          py: 3,
-                          fontSize: '1.1rem',
-                          fontWeight: 500,
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            color: 'primary.main',
-                          },
-                          '&.Mui-selected': {
-                            color: 'primary.main',
-                          },
-                        },
-                        '& .MuiTabs-indicator': {
-                          height: 3,
-                          backgroundColor: 'primary.main',
-                        },
-                      }}
-                    >
-                      <Tab label="Login" />
-                      <Tab label="Register" />
-                    </Tabs>
-                    <div style={{ padding: '32px' }}>
-                      {tab === 0 && <LoginForm />}
-                      {tab === 1 && <RegisterForm setTab={setTab} />}
-                    </div>
-                  </Paper>
+                  (() => {
+                    // Clear any orphaned session data when accessing login page
+                    const storedUserId = localStorage.getItem('userId');
+                    const lastActivity = localStorage.getItem('lastActivity');
+                    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+                    
+                    if (storedUserId && (!lastActivity || Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT)) {
+                      localStorage.removeItem('userId');
+                      localStorage.removeItem('lastActivity');
+                      localStorage.removeItem('passwordResetCompleted');
+                    }
+                    
+                    return (
+                      <Paper elevation={0} sx={paperStyles}>
+                        <Tabs 
+                          value={tab} 
+                          onChange={handleChange} 
+                          variant="fullWidth"
+                          sx={{
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                            '& .MuiTab-root': {
+                              py: 3,
+                              fontSize: '1.1rem',
+                              fontWeight: 500,
+                              transition: 'all 0.2s',
+                              '&:hover': {
+                                color: 'primary.main',
+                              },
+                              '&.Mui-selected': {
+                                color: 'primary.main',
+                              },
+                            },
+                            '& .MuiTabs-indicator': {
+                              height: 3,
+                              backgroundColor: 'primary.main',
+                            },
+                          }}
+                        >
+                          <Tab label="Login" />
+                          <Tab label="Register" />
+                        </Tabs>
+                        <div style={{ padding: '32px' }}>
+                          {tab === 0 && <LoginForm />}
+                          {tab === 1 && <RegisterForm setTab={setTab} />}
+                        </div>
+                      </Paper>
+                    );
+                  })()
                 }
-              />
-
-              {/* Public Auth Routes - Only accessible when not authenticated */}
+              />{/* Public Auth Routes - Only accessible when not authenticated */}
               <Route
                 path="/forgot-password"
                 element={
                   isAuthenticated() ? (
                     <Navigate to="/home-screen" replace />
                   ) : (
-                    <Paper elevation={0} sx={{ ...paperStyles, p: 4 }}>
-                      <ForgotPasswordForm />
-                    </Paper>
+                    (() => {
+                      // Clear any orphaned userId when accessing public route
+                      const storedUserId = localStorage.getItem('userId');
+                      const lastActivity = localStorage.getItem('lastActivity');
+                      const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+                      
+                      if (storedUserId && (!lastActivity || Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT)) {
+                        localStorage.removeItem('userId');
+                        localStorage.removeItem('lastActivity');
+                        localStorage.removeItem('passwordResetCompleted');
+                      }
+                      
+                      return (
+                        <Paper elevation={0} sx={{ ...paperStyles, p: 4 }}>
+                          <ForgotPasswordForm />
+                        </Paper>
+                      );
+                    })()
                   )
                 }
               />

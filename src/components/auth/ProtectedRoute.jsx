@@ -18,14 +18,38 @@ function ProtectedRoute({ children }) {
   const hasVerifiedEmail = location.state?.userId && !userId; // Check if user has verified email but isn't logged in
   const hasCompletedPasswordReset = localStorage.getItem('passwordResetCompleted');
 
+  // Early authentication validation
+  const isAuthenticated = () => {
+    if (!userId || !lastActivity) return false;
+    
+    if (Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT) {
+      // Session expired - clear all data
+      clearSessionData();
+      return false;
+    }
+    
+    return true;
+  };
+
   // Clear all session data
   const clearSessionData = () => {
     localStorage.removeItem('userId');
     localStorage.removeItem('lastActivity');
     localStorage.removeItem('passwordResetCompleted');
     // Clear any other session-related data
-    sessionStorage.clear();
-  };
+    sessionStorage.clear();  };
+
+  // Immediate check: if user is not authenticated and not on reset-password with verified email, redirect
+  if (!isAuthenticated() && !isResetPasswordRoute) {
+    clearSessionData();
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+
+  // If user is not on reset-password but has no authentication, redirect
+  if (!userId && !hasVerifiedEmail && !isResetPasswordRoute) {
+    clearSessionData();
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
 
   // Prevent back navigation when not authenticated
   useEffect(() => {
