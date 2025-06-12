@@ -149,7 +149,6 @@ function ForgotPasswordForm() {
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          required
           fullWidth
           sx={{
             '& .MuiOutlinedInput-root': {
@@ -170,7 +169,6 @@ function ForgotPasswordForm() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
           fullWidth
           sx={{
             '& .MuiOutlinedInput-root': {

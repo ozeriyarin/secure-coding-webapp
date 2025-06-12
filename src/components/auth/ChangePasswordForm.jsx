@@ -1,9 +1,7 @@
-import { useState, useCallback } from 'react';
-import { usePasswordPolicy, validatePassword, PasswordCriteria } from '../../utils/passwordPolicy';
-import { TextField, Button, Typography, Box, IconButton, InputAdornment, Alert, Stack } from '@mui/material';
+import { useState } from 'react';
+import { TextField, Button, Typography, Box, IconButton, InputAdornment, Alert } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-
 
 function ChangePasswordForm() {
   const [oldPassword, setOldPassword] = useState('');
@@ -13,11 +11,7 @@ function ChangePasswordForm() {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [message, setMessage] = useState('');
-  const [errors, setErrors] = useState({});
   
-  const policy = usePasswordPolicy();
-  const { ok: pwdOK } = validatePassword(newPassword, policy);
-
   const location = useLocation();
   const { userId } = location.state || {};
   const navigate = useNavigate();
@@ -26,58 +20,28 @@ function ChangePasswordForm() {
   const handleClickShowConfirmNewPassword = () => setShowConfirmNewPassword((show) => !show);
   const handleClickShowOldPassword = () => setShowOldPassword((show) => !show);
 
-
-  const validate = useCallback(
-    (field, val) => {
-      switch (field) {
-        case 'newPassword':
-          return validatePassword(val, policy).ok
-            ? ''
-            : 'Password does not meet policy requirements';
-        case 'confirmNewPassword':
-          return val === newPassword ? '' : 'Passwords mismatch';
-        default:
-          return '';
-      }
-    },
-    [newPassword, policy]
-  );
-
-  const handlePasswordChange = useCallback(
-    (field) => (e) => {
-      const val = e.target.value;
-      if (field === 'newPassword') {
-        setNewPassword(val);
-        setErrors((prev) => ({ 
-          ...prev, 
-          newPassword: validate('newPassword', val),
-          confirmNewPassword: validate('confirmNewPassword', confirmNewPassword)
-        }));
-      } else if (field === 'confirmNewPassword') {
-        setConfirmNewPassword(val);
-        setErrors((prev) => ({ 
-          ...prev, 
-          confirmNewPassword: validate('confirmNewPassword', val)
-        }));
-      } else {
-        setOldPassword(val);
-      }
-    },
-    [validate, confirmNewPassword]
-  );
+  const handlePasswordChange = (field) => (e) => {
+    const val = e.target.value;
+    if (field === 'newPassword') {
+      setNewPassword(val);
+    } else if (field === 'confirmNewPassword') {
+      setConfirmNewPassword(val);
+    } else {
+      setOldPassword(val);
+    }
+  };
 
   const isFormValid = () =>
     oldPassword &&
     newPassword &&
     confirmNewPassword &&
-    newPassword === confirmNewPassword &&
-    pwdOK;
+    newPassword === confirmNewPassword;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!isFormValid()) {
-      setMessage('Please fill all fields correctly and ensure password meets all requirements.');
+      setMessage('Please fill all fields correctly.');
       return;
     }
 
@@ -214,8 +178,6 @@ function ChangePasswordForm() {
         type={showNewPassword ? 'text' : 'password'}
         value={newPassword}
         onChange={handlePasswordChange('newPassword')}
-        error={!!errors.newPassword}
-        helperText={errors.newPassword}
         autoComplete="new-password"
         required
         fullWidth
@@ -251,8 +213,6 @@ function ChangePasswordForm() {
         type={showConfirmNewPassword ? 'text' : 'password'}
         value={confirmNewPassword}
         onChange={handlePasswordChange('confirmNewPassword')}
-        error={!!errors.confirmNewPassword}
-        helperText={errors.confirmNewPassword}
         autoComplete="new-password"
         required
         fullWidth
@@ -282,9 +242,6 @@ function ChangePasswordForm() {
           ),
         }}
       />
-
-      {/* live password criteria */}
-      <PasswordCriteria pwd={newPassword} policy={policy} />
 
       <Button
         type="submit"

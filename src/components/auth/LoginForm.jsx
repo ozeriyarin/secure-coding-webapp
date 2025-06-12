@@ -62,13 +62,6 @@ function LoginForm() {
       return;
     }
 
-    /* client-side format check (still uses generic message) */
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-      setStatusMsg(GENERIC_ERROR);
-      return;
-    }
-
     const data = {
       username: email.split('@')[0],
       password

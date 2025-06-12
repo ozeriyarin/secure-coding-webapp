@@ -14,10 +14,8 @@ import {
   Typography
 } from '@mui/material';
 
-
 // date pickers
 import dayjs from 'dayjs';
-
 
 /**
  * Main component of the Add/Edit customers view.
@@ -41,14 +39,6 @@ export default function CustomerFormModal({
     phone: '',
     email: '',
     date: ''
-  });
-
-  const [invalidFields, setInvalidFields] = useState({ // State for error bold fields
-    first_name: false,
-    last_name: false,
-    phone: false,
-    email: false,
-    date: false,
   });
 
   const todayISO = new Date().toISOString().split('T')[0];
@@ -89,48 +79,7 @@ export default function CustomerFormModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setInvalidFields({
-      first_name: false,
-      last_name: false,
-      phone: false,
-      email: false,
-      date: false,
-    });
-
-    const empties = {
-      first_name: !formData.first_name.trim(),
-      last_name: !formData.last_name.trim(),
-      phone: !formData.phone.trim(),
-      email: !formData.email.trim(),
-      date: !formData.date,
-    };
-
-    const namePattern = /^[A-Za-z\u0590-\u05FF\s'-]{2,50}$/;    // letters/spaces/'–, length 2–50
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;          // basic email
-    const phonePattern = /^\+?[0-9]{7,15}$/;            // 7-15 digits,'+' at the start   
-
-    const formats = {
-      first_name: !empties.first_name && !namePattern.test(formData.first_name),
-      last_name: !empties.last_name && !namePattern.test(formData.last_name),
-      email: !empties.email && !emailPattern.test(formData.email),
-      phone: !empties.phone && !phonePattern.test(formData.phone),
-    };
-
-    const newInvalid = {
-      first_name: empties.first_name || formats.first_name,
-      last_name: empties.last_name || formats.last_name,
-      phone: empties.phone || formats.phone,
-      email: empties.email || formats.email,
-      date: empties.date,
-    };
-    setInvalidFields(newInvalid);
-
-    if (Object.values(newInvalid).some(Boolean)) {
-      return;
-    }
-
-    const id = initialData ? initialData.id : uuidv4(); // Generate a new ID for the customer
-
+    const id = initialData ? initialData.id : uuidv4();
     const formattedDate = dayjs(formData.date).format('YYYY-MM-DD');
 
     const customerDetails = {
@@ -232,9 +181,6 @@ export default function CustomerFormModal({
             label="First Name"
             value={formData.first_name}
             onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-            error={invalidFields.first_name}
-            helperText={invalidFields.first_name ? 'First name is required' : ''}
-            required
             fullWidth
             sx={{ gridColumn: { xs: '1', sm: '1' } }}
           />
@@ -242,9 +188,6 @@ export default function CustomerFormModal({
             label="Last Name"
             value={formData.last_name}
             onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-            error={invalidFields.last_name}
-            helperText={invalidFields.last_name ? 'Last name is required' : ''}
-            required
             fullWidth
             sx={{ gridColumn: { xs: '1', sm: '2' } }}
           />
@@ -252,9 +195,6 @@ export default function CustomerFormModal({
             label="Phone"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            error={invalidFields.phone}
-            helperText={invalidFields.phone ? 'Phone number is required' : ''}
-            required
             fullWidth
             sx={{ gridColumn: { xs: '1', sm: '1' } }}
           />
@@ -263,9 +203,6 @@ export default function CustomerFormModal({
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            error={invalidFields.email}
-            helperText={invalidFields.email ? 'Valid email is required' : ''}
-            required
             fullWidth
             sx={{ gridColumn: { xs: '1', sm: '2' } }}
           />
@@ -274,9 +211,6 @@ export default function CustomerFormModal({
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            error={invalidFields.date}
-            helperText={invalidFields.date ? 'Date is required' : ''}
-            required
             fullWidth
             InputLabelProps={{ shrink: true }}
             inputProps={{ max: todayISO }}

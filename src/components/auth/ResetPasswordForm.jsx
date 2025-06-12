@@ -1,9 +1,4 @@
-import React, { useState, useCallback } from 'react';
-import {
-  usePasswordPolicy,
-  validatePassword,
-  PasswordCriteria
-} from '../../utils/passwordPolicy';
+import React, { useState } from 'react';
 import {
   TextField,
   Button,
@@ -11,18 +6,13 @@ import {
   Box,
   IconButton,
   InputAdornment,
-  Alert,
-  Stack
+  Alert
 } from '@mui/material';
 import {
   Visibility,
-  VisibilityOff,
-  CheckCircle,
-  Cancel
+  VisibilityOff
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-
 
 const INPUT_SX = {
   '& .MuiOutlinedInput-root': {
@@ -33,77 +23,30 @@ const INPUT_SX = {
   }
 };
 
-/* ---------- component ---------- */
 function ResetPasswordForm() {
-  /* ---------- state ---------- */
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState('');
-  const [errors, setErrors] = useState({});
   
-  const policy = usePasswordPolicy();
-  const { ok: pwdOK } = validatePassword(newPassword, policy);
-
   const location = useLocation();
   const { userId } = location.state || {};
   const navigate = useNavigate();
 
-  /* ---------- derived ---------- */
-  const isFormValid = () =>
-    newPassword &&
-    confirmPassword &&
-    newPassword === confirmPassword &&
-    pwdOK;
-
-  /* ---------- helpers ---------- */
   const handleClickShowNewPassword = () => setShowNewPassword((show) => !show);
   const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
 
-  const validate = useCallback(
-    (field, val) => {
-      switch (field) {
-        case 'newPassword':
-          return validatePassword(val, policy).ok
-            ? ''
-            : 'Password does not meet policy requirements';
-        case 'confirmPassword':
-          return val === newPassword ? '' : 'Passwords mismatch';
-        default:
-          return '';
-      }
-    },
-    [newPassword, policy]
-  );
-
-  const handlePasswordChange = useCallback(
-    (field) => (e) => {
-      const val = e.target.value;
-      if (field === 'newPassword') {
-        setNewPassword(val);
-        setErrors((prev) => ({ 
-          ...prev, 
-          newPassword: validate('newPassword', val),
-          confirmPassword: validate('confirmPassword', confirmPassword)
-        }));
-      } else {
-        setConfirmPassword(val);
-        setErrors((prev) => ({ 
-          ...prev, 
-          confirmPassword: validate('confirmPassword', val)
-        }));
-      }
-    },
-    [validate, confirmPassword]
-  );
-
-  /* ---------- submit ---------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isFormValid()) {
-      setMessage('Please fill all fields correctly and ensure password meets all requirements.');
+    if (!newPassword || !confirmPassword) {
+      setMessage('Please fill all fields.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setMessage('Passwords do not match.');
       return;
     }
 
@@ -134,10 +77,8 @@ function ResetPasswordForm() {
       setNewPassword('');
       setConfirmPassword('');
       
-      // Mark password reset as completed
       localStorage.setItem('passwordResetCompleted', 'true');
       
-      // Navigate to login page after a short delay
       setTimeout(() => {
         navigate('/');
       }, 2000);
@@ -147,7 +88,6 @@ function ResetPasswordForm() {
     }
   };
 
-  /* ---------- render ---------- */
   return (
     <Box
       component="form"
@@ -203,9 +143,7 @@ function ResetPasswordForm() {
         label="New Password"
         type={showNewPassword ? 'text' : 'password'}
         value={newPassword}
-        onChange={handlePasswordChange('newPassword')}
-        error={!!errors.newPassword}
-        helperText={errors.newPassword}
+        onChange={(e) => setNewPassword(e.target.value)}
         autoComplete="new-password"
         required
         fullWidth
@@ -229,9 +167,7 @@ function ResetPasswordForm() {
         label="Confirm New Password"
         type={showConfirmPassword ? 'text' : 'password'}
         value={confirmPassword}
-        onChange={handlePasswordChange('confirmPassword')}
-        error={!!errors.confirmPassword}
-        helperText={errors.confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
         autoComplete="new-password"
         required
         fullWidth
@@ -251,13 +187,9 @@ function ResetPasswordForm() {
         }}
       />
 
-      {/* live password criteria */}
-      <PasswordCriteria pwd={newPassword} policy={policy} />
-
       <Button
         type="submit"
         variant="contained"
-        disabled={!isFormValid()}
         fullWidth
         sx={{
           mt: 2,
