@@ -1,13 +1,24 @@
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
 # secure-coding-webapp
+
+Front-end for a secure-coding course project: a small customer-management app built around a hardened authentication flow.
+
+## What it does
+
+- **Authentication** – register, login, change password, forgot / reset password flows
+- **Password policy** – configurable rules (length, complexity, history, dictionary words) enforced client-side before submission (`src/utils/passwordPolicy.jsx`)
+- **Protected routes** – pages behind login via a `ProtectedRoute` wrapper
+- **Customers** – table view plus a create/edit modal with date validation
+- Light / dark theme via React context
+
+## Stack
+
+React 19 · Vite · React Router 7 · MUI 7 · dayjs
+
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Lint with `npm run lint`, production build with `npm run build`.
